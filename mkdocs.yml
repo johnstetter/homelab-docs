@@ -90,6 +90,7 @@ nav:
       - Overview: stacks/index.md
       - ctr01 Stacks: stacks/ctr01.md
       - Synology Stacks: stacks/synology.md
+      - Renovate: stacks/renovate.md
   - Services:
       - Service Catalog: services/index.md
       - Core:

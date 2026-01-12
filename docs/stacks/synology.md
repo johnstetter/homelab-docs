@@ -2,11 +2,19 @@
 
 Docker Compose stacks running on the Synology DS1621+ NAS (192.168.1.4).
 
-**Repository:** [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) (Synology stacks in same group)
+**Repository:** [stetter-homelab/syn-stacks](https://gitlab.com/stetter-homelab/syn-stacks)
 
 ## Overview
 
-The Synology NAS runs a small set of supplementary services that benefit from running on always-on storage hardware.
+The Synology NAS runs core infrastructure services that benefit from the stability and always-on nature of the NAS hardware. These services are intentionally kept separate from the primary Docker host (ctr01) to ensure critical infrastructure remains available even during container updates, host reboots, or maintenance on ctr01.
+
+!!! info "Why Synology for Core Infrastructure?"
+    The Synology runs primary DNS (Technitium) because:
+
+    - **Stability** - Not subject to frequent container restarts during development
+    - **Independence** - DNS remains available during ctr01 maintenance
+    - **Always-on** - NAS is designed for 24/7 operation with minimal downtime
+    - **Network foundation** - DNS is critical infrastructure that other services depend on
 
 | Stack | Services | Purpose |
 |-------|----------|---------|
@@ -43,7 +51,10 @@ Synology DSM 7.x uses Container Manager (Docker) for running containers. Stacks 
 
 ## Technitium
 
-Primary internal DNS server for the homelab.
+**Primary internal DNS server** for the entire homelab cluster.
+
+!!! success "Primary DNS Node"
+    This is the authoritative DNS server for the homelab. Running on the Synology ensures DNS remains stable and available independent of ctr01 container restarts, updates, or maintenance windows.
 
 ### Service Details
 
@@ -104,12 +115,20 @@ Queries for external domains are forwarded to:
 
 ### High Availability
 
-The secondary DNS server on ctr01 syncs from this primary:
+The DNS cluster provides redundancy with zone transfer:
 
-- **Primary:** syn (192.168.1.4)
-- **Secondary:** ctr01 (192.168.1.20)
+| Role | Host | IP | Notes |
+|------|------|----|-------|
+| **Primary** | syn (Synology) | 192.168.1.4 | Authoritative, stable |
+| **Secondary** | ctr01 | 192.168.1.20 | Backup, syncs from primary |
 
-Clients should be configured with both DNS servers.
+**Why this architecture:**
+
+- **Primary on Synology** - Isolated from ctr01 container churn; DNS stays up during ctr01 maintenance
+- **Secondary on ctr01** - Provides redundancy if Synology is down for updates or hardware maintenance
+- **Zone Transfer** - ctr01 Technitium syncs zones from Synology automatically
+
+Clients should be configured with both DNS servers (primary first, then secondary).
 
 ---
 

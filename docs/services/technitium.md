@@ -6,25 +6,36 @@ Technitium DNS Server for authoritative DNS and local resolution across the home
 
 | Property | Value |
 |----------|-------|
-| **Primary URL** | [technitium-syn.rsdn.io](https://technitium-syn.rsdn.io) |
-| **Secondary URL** | [technitium-ctr.rsdn.io](https://technitium-ctr.rsdn.io) |
-| **Stack** | [compose-stacks/technitium](https://gitlab.com/stetter-homelab/compose-stacks/technitium) |
+| **Primary URL** | [dns.rsdn.io](https://dns.rsdn.io) |
+| **Secondary URL** | [dns-ctr01.rsdn.io](https://dns-ctr01.rsdn.io) |
+| **Primary Stack** | [syn-stacks/technitium](https://gitlab.com/stetter-homelab/syn-stacks) (Synology) |
+| **Secondary Stack** | [compose-stacks/technitium](https://gitlab.com/stetter-homelab/compose-stacks/technitium) (ctr01) |
 | **Port** | 5380 (Web UI), 53 (DNS) |
 | **Image** | `technitium/dns-server` |
 
 ## Architecture
 
-The homelab runs two Technitium instances for redundancy:
+The homelab runs two Technitium instances in a primary/secondary configuration for redundancy.
 
 | Instance | Host | IP | Role |
 |----------|------|-----|------|
-| Primary | Synology NAS | 192.168.1.4 | Main DNS, authoritative for rsdn.io |
+| **Primary** | Synology NAS | 192.168.1.4 | Authoritative for rsdn.io |
 | Secondary | ctr01 | 192.168.1.20 | Backup DNS, zone replica |
 
+!!! info "Why Primary on Synology?"
+    The primary DNS runs on the Synology NAS rather than ctr01 because:
+
+    - **Stability** - Not affected by frequent container restarts during development on ctr01
+    - **Independence** - DNS remains available during ctr01 maintenance, updates, or reboots
+    - **Always-on** - NAS is designed for 24/7 operation with minimal downtime
+    - **Critical infrastructure** - Other services depend on DNS; isolation reduces blast radius
+
 **DNS Flow:**
+
 1. Clients query primary (192.168.1.4:53)
 2. If unavailable, failover to secondary (192.168.1.20:53)
 3. UDM Pro configured with both as DNS servers
+4. Zone transfer keeps secondary in sync with primary
 
 ---
 
@@ -266,7 +277,8 @@ curl -X POST "http://$DNS/api/cache/clear?token=$TOKEN"
 
 ## Related
 
-- [Core Stack](../stacks/ctr01.md#core)
+- [Synology Stacks - Technitium (Primary)](../stacks/synology.md#technitium)
+- [ctr01 Stacks - Technitium (Secondary)](../stacks/ctr01.md#technitium-ctr01)
 - [Traefik](traefik.md) - Reverse proxy (uses DNS for routing)
 - [Technitium Official Docs](https://technitium.com/dns/)
 - [Troubleshooting Runbook](../runbooks/troubleshooting.md)

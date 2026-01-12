@@ -18,7 +18,7 @@ All Docker Compose stacks running on ctr01 (192.168.1.20), the primary Docker ho
 | [frigate](#frigate) | Frigate, MQTT | Active |
 | [dev-tools](#dev-tools) | code-server, Flame, IT-Tools | Active |
 | [gitlab](#gitlab) | GitLab CE | Active |
-| [technitium](#technitium-ctr01) | Technitium DNS | Active |
+| [technitium](#technitium-ctr01) | Technitium DNS | Active (Secondary/Backup) |
 | [mcp](#mcp) | MCP Servers | Active |
 
 ---
@@ -481,7 +481,7 @@ Self-hosted GitLab CE instance.
 
 ## Technitium (ctr01)
 
-Secondary DNS server for redundancy.
+**Secondary/backup DNS server** for redundancy.
 
 | Property | Value |
 |----------|-------|
@@ -489,7 +489,20 @@ Secondary DNS server for redundancy.
 | **Port** | 5380 (web), 53 (DNS) |
 | **URL** | [dns-ctr01.rsdn.io](https://dns-ctr01.rsdn.io) |
 
-**Role:** Secondary DNS, synced from primary on Synology.
+!!! info "Backup DNS Node"
+    This Technitium instance is the **secondary DNS** in the cluster. It syncs zones from the primary DNS on the Synology NAS via zone transfer.
+
+    **Why secondary on ctr01?**
+
+    - Primary DNS runs on Synology for stability (not subject to ctr01 container churn)
+    - This provides redundancy if Synology is down for maintenance
+    - Clients should use: Primary (192.168.1.4), Secondary (192.168.1.20)
+
+**Configuration:**
+
+- Receives zone transfers from primary (192.168.1.4)
+- Read-only zones (changes made on primary only)
+- Automatic sync keeps zones current
 
 ---
 
