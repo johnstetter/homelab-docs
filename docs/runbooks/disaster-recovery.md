@@ -450,8 +450,7 @@ The Synology is the source of truth for:
 3. Check storage pool health in Storage Manager
 4. Start required containers in Container Manager:
    - Technitium DNS (priority 1)
-   - Pi-hole (priority 2)
-   - Node Exporter (priority 3)
+   - Node Exporter (priority 2)
 
 **If Synology storage is corrupted:**
 

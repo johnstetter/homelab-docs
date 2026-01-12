@@ -32,7 +32,6 @@ graph TB
 
     subgraph syn["syn (192.168.1.4)"]
         Technitium[Technitium DNS]
-        PiHole[Pi-hole]
         NodeExporter[Node Exporter]
     end
 
@@ -72,8 +71,7 @@ Core infrastructure services on the Synology NAS. These run separately from ctr0
 
 | Stack | Services | Purpose |
 |-------|----------|---------|
-| [technitium](synology.md#technitium) | Technitium DNS | **Primary DNS** (authoritative) |
-| [pihole](synology.md#pihole) | Pi-hole | Ad blocking |
+| [technitium](synology.md#technitium) | Technitium DNS | **Primary DNS** + ad blocking |
 | [node-exporter](synology.md#node-exporter) | Node Exporter | Synology metrics |
 
 ## Stack Management

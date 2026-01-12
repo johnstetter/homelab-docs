@@ -98,8 +98,7 @@ The RTX 2000E ADA is passed through to ctr01 for:
 **Services Running:**
 
 - Docker (Container Manager)
-- Technitium DNS (Primary)
-- Pi-hole (Ad blocking)
+- Technitium DNS (Primary + ad blocking)
 - Node Exporter (Metrics)
 
 ## Network

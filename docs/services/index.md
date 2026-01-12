@@ -10,9 +10,8 @@ Complete catalog of all services running in the Stetter Homelab with access URLs
 |---------|-----|------|---------|
 | Traefik | [traefik.rsdn.io](https://traefik.rsdn.io) | ctr01 | Reverse proxy dashboard |
 | Vault | [vault.rsdn.io](https://vault.rsdn.io) | ctr01 | Secrets management |
-| Technitium (Primary) | [dns.rsdn.io](https://dns.rsdn.io) | syn | Primary DNS |
+| Technitium (Primary) | [dns.rsdn.io](https://dns.rsdn.io) | syn | Primary DNS + ad blocking |
 | Technitium (Secondary) | [dns-ctr01.rsdn.io](https://dns-ctr01.rsdn.io) | ctr01 | Secondary DNS |
-| Pi-hole | [pihole.rsdn.io](https://pihole.rsdn.io) | syn | Ad blocking |
 
 ### Monitoring & Observability
 

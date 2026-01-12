@@ -166,7 +166,6 @@ Core infrastructure on Synology:
 | Stack | Images Tracked |
 |-------|----------------|
 | technitium | technitium/dns-server |
-| pihole | pihole/pihole |
 | node-exporter | prom/node-exporter |
 
 ## Best Practices

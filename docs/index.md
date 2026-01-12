@@ -69,7 +69,7 @@ The Stetter Homelab runs on a combination of Proxmox VE virtualization, Docker c
 - **DNS Provider:** Cloudflare
 - **SSL/TLS:** Let's Encrypt wildcard certificates via Traefik
 - **Internal DNS:** Technitium (primary on syn, secondary on ctr01)
-- **Ad Blocking:** Pi-hole on Synology
+- **Ad Blocking:** Technitium DNS (built-in blocking)
 
 ## Repository Structure
 

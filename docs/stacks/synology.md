@@ -18,8 +18,7 @@ The Synology NAS runs core infrastructure services that benefit from the stabili
 
 | Stack | Services | Purpose |
 |-------|----------|---------|
-| [technitium](#technitium) | Technitium DNS | Primary internal DNS |
-| [pihole](#pihole) | Pi-hole | Ad blocking |
+| [technitium](#technitium) | Technitium DNS | Primary internal DNS + ad blocking |
 | [node-exporter](#node-exporter) | Node Exporter | Synology metrics |
 
 ## Synology Docker Environment
@@ -68,6 +67,7 @@ Synology DSM 7.x uses Container Manager (Docker) for running containers. Stacks 
 ### Features
 
 - **Internal DNS Resolution** - All `*.rsdn.io` domains resolve internally
+- **Ad Blocking** - Built-in block lists for ads and trackers
 - **DNS-over-HTTPS** - Encrypted upstream queries
 - **Query Logging** - All DNS queries logged for troubleshooting
 - **Zone Management** - Internal zone for homelab services
@@ -108,10 +108,10 @@ services:
 
 ### Upstream DNS
 
-Queries for external domains are forwarded to:
+Queries for external domains are forwarded to Cloudflare DNS-over-HTTPS:
 
-1. Pi-hole (192.168.1.4:5353) - Ad filtering
-2. Cloudflare (1.1.1.1) - Fallback
+- Primary: `1.1.1.1` (Cloudflare)
+- Secondary: `8.8.8.8` (Google)
 
 ### High Availability
 
@@ -129,72 +129,6 @@ The DNS cluster provides redundancy with zone transfer:
 - **Zone Transfer** - ctr01 Technitium syncs zones from Synology automatically
 
 Clients should be configured with both DNS servers (primary first, then secondary).
-
----
-
-## Pihole
-
-Ad blocking DNS sinkhole.
-
-### Service Details
-
-| Property | Value |
-|----------|-------|
-| **Image** | `pihole/pihole:latest` |
-| **Port** | 5353 (DNS), 8080 (Web UI) |
-| **URL** | [pihole.rsdn.io](https://pihole.rsdn.io) |
-
-### Features
-
-- **Ad Blocking** - Blocks ads at DNS level
-- **Tracking Protection** - Blocks known trackers
-- **Statistics** - Query statistics and graphs
-- **Custom Blocklists** - Additional blocklist sources
-
-### Configuration
-
-```yaml
-services:
-  pihole:
-    image: pihole/pihole:latest
-    container_name: pihole
-    ports:
-      - "5353:53/tcp"
-      - "5353:53/udp"
-      - "8080:80/tcp"
-    volumes:
-      - ./etc-pihole:/etc/pihole
-      - ./etc-dnsmasq.d:/etc/dnsmasq.d
-    environment:
-      - TZ=America/Chicago
-      - WEBPASSWORD=${PIHOLE_PASSWORD}
-      - PIHOLE_DNS_=1.1.1.1;8.8.8.8
-    restart: unless-stopped
-```
-
-### Integration with Technitium
-
-Technitium forwards queries to Pi-hole for ad filtering:
-
-```
-Client → Technitium (192.168.1.4:53) → Pi-hole (192.168.1.4:5353) → Cloudflare
-```
-
-### Blocklists
-
-Default blocklists plus:
-
-- Steven Black's Unified Hosts
-- Energized Protection
-- OISD blocklist
-
-### Whitelisting
-
-Common false positives are whitelisted:
-
-- Microsoft services (some required for updates)
-- Apple services
-- Specific streaming services
 
 ---
 
@@ -308,7 +242,7 @@ Container volumes are stored on `/volume1/docker` which is included in:
 
 ### Configuration Backup
 
-Stack configurations are version-controlled in the [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) group.
+Stack configurations are version-controlled in [syn-stacks](https://gitlab.com/stetter-homelab/syn-stacks).
 
 ---
 
@@ -331,12 +265,13 @@ Stack configurations are version-controlled in the [compose-stacks](https://gitl
    docker logs technitium
    ```
 
-### Pi-hole Blocking Legitimate Sites
+### Ad Blocking False Positives
 
-1. Access Pi-hole admin at [pihole.rsdn.io](https://pihole.rsdn.io)
-2. Go to Query Log
-3. Find blocked domain
-4. Whitelist if needed
+If Technitium is blocking legitimate sites:
+
+1. Access Technitium admin at [dns.rsdn.io](https://dns.rsdn.io)
+2. Go to **Logs** to find blocked queries
+3. Add domain to **Settings > Blocking > Allow List**
 
 ### Node Exporter Not Scraped
 
