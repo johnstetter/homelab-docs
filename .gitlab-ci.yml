@@ -1,0 +1,28 @@
+image: python:3.12-slim
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
+pages:
+  stage: deploy
+  script:
+    - pip install -r requirements.txt
+    - mkdocs build --site-dir public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# Build test for merge requests
+build:
+  stage: build
+  script:
+    - pip install -r requirements.txt
+    - mkdocs build --strict
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"

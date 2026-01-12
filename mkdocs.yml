@@ -1,0 +1,98 @@
+site_name: Stetter Homelab
+site_description: Central documentation hub for stetter-homelab infrastructure
+site_author: John Stetter
+site_url: https://stetter-homelab.gitlab.io/docs
+
+repo_name: stetter-homelab/docs
+repo_url: https://gitlab.com/stetter-homelab/docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/gitlab
+
+plugins:
+  - search
+  - tags
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - admonition
+  - tables
+  - attr_list
+  - md_in_html
+  - def_list
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra:
+  social:
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.com/stetter-homelab
+  generator: false
+
+copyright: Copyright &copy; 2024-2025 John Stetter
+
+nav:
+  - Home: index.md
+  - Architecture:
+      - Overview: architecture/index.md
+      - Network Topology: architecture/network.md
+      - Hardware Inventory: architecture/hardware.md
+  - Infrastructure:
+      - Overview: infrastructure/index.md
+      - VM Platform: infrastructure/vm-platform.md
+      - Kubernetes Platform: infrastructure/k8s-platform.md
+  - Stacks:
+      - Overview: stacks/index.md
+      - ctr01 Stacks: stacks/ctr01.md
+      - Synology Stacks: stacks/synology.md
+  - Services:
+      - Service Catalog: services/index.md
+  - Runbooks:
+      - Overview: runbooks/index.md
+      - Adding New Stacks: runbooks/new-stack.md
+      - Troubleshooting: runbooks/troubleshooting.md
