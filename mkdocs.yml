@@ -92,12 +92,27 @@ nav:
       - Synology Stacks: stacks/synology.md
   - Services:
       - Service Catalog: services/index.md
-      - Vault: services/vault.md
-      - Traefik: services/traefik.md
-      - Grafana: services/grafana.md
-      - Portainer: services/portainer.md
-      - Frigate: services/frigate.md
-      - Plex: services/plex.md
+      - Core:
+          - Traefik: services/traefik.md
+          - Vault: services/vault.md
+          - Technitium: services/technitium.md
+      - Monitoring:
+          - Prometheus: services/prometheus.md
+          - Grafana: services/grafana.md
+          - Loki: services/loki.md
+      - Management:
+          - Portainer: services/portainer.md
+          - Semaphore: services/semaphore.md
+          - Backrest: services/backrest.md
+      - AI:
+          - Ollama: services/ollama.md
+          - n8n: services/n8n.md
+      - Media:
+          - Plex: services/plex.md
+          - Sonarr: services/sonarr.md
+          - Radarr: services/radarr.md
+      - Security:
+          - Frigate: services/frigate.md
   - Runbooks:
       - Overview: runbooks/index.md
       - Adding New Stacks: runbooks/new-stack.md
