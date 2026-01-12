@@ -2,7 +2,7 @@
 
 Docker Compose stacks running on the Synology DS1621+ NAS (192.168.1.4).
 
-**Repository:** [stetter-homelab/syn-stacks](https://gitlab.com/stetter-homelab/syn-stacks)
+**Repository:** [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) (Synology stacks in same group)
 
 ## Overview
 
@@ -289,7 +289,7 @@ Container volumes are stored on `/volume1/docker` which is included in:
 
 ### Configuration Backup
 
-Stack configurations are version-controlled in the syn-stacks repository.
+Stack configurations are version-controlled in the [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) group.
 
 ---
 

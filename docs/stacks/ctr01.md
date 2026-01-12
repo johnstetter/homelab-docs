@@ -2,7 +2,7 @@
 
 All Docker Compose stacks running on ctr01 (192.168.1.20), the primary Docker host.
 
-**Repository:** [stetter-homelab/ctr01-stacks](https://gitlab.com/stetter-homelab/ctr01-stacks)
+**Repository:** [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) (e.g., `compose-stacks/core`, `compose-stacks/monitoring`)
 
 ## Stack Overview
 

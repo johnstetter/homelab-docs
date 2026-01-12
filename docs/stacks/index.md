@@ -47,7 +47,7 @@ graph TB
 
 Primary Docker host for most workloads.
 
-**Repository:** [stetter-homelab/ctr01-stacks](https://gitlab.com/stetter-homelab/ctr01-stacks)
+**Repository:** [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) (one repo per stack)
 
 | Stack | Services | Purpose |
 |-------|----------|---------|
@@ -68,7 +68,7 @@ Primary Docker host for most workloads.
 
 Supplementary services on the Synology NAS.
 
-**Repository:** [stetter-homelab/syn-stacks](https://gitlab.com/stetter-homelab/syn-stacks)
+**Repository:** [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) (synology stacks also in this group)
 
 | Stack | Services | Purpose |
 |-------|----------|---------|
