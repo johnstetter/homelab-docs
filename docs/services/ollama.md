@@ -366,6 +366,6 @@ The API response includes timing information:
 ## Related
 
 - [AI Stack](../stacks/ctr01.md#ai)
-- [ctr01 GPU Setup](../infrastructure/ctr01.md)
+- [VM Platform](../infrastructure/vm-platform.md) - GPU passthrough configuration
 - [Ollama Official Docs](https://ollama.ai/docs)
 - [Open-WebUI Docs](https://docs.openwebui.com/)

@@ -302,7 +302,8 @@ scp ctr01:/tmp/semaphore-backup.tar.gz ./
 
 ## Related
 
-- [Ansible Playbooks](../runbooks/ansible.md)
+- [VM Lifecycle Runbook](../runbooks/vm-lifecycle.md) - Ansible deployment workflows
 - [Management Stack](../stacks/ctr01.md#management)
 - [vm-platform Repository](https://gitlab.com/stetter-homelab/vm-platform)
 - [Semaphore Documentation](https://docs.semaphoreui.com/)
+- [Ansible Documentation](https://docs.ansible.com/)

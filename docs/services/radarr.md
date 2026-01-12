@@ -265,6 +265,6 @@ scp ctr01:/tmp/radarr-backup.tar.gz ./
 ## Related
 
 - [Sonarr](sonarr.md) - TV show automation (same workflow)
-- [SABnzbd](sabnzbd.md) - Usenet download client
-- [Media Stack](../stacks/ctr01.md#media)
+- [Media Stack](../stacks/ctr01.md#media) - Includes SABnzbd configuration
 - [Radarr Wiki](https://wiki.servarr.com/radarr)
+- [SABnzbd Docs](https://sabnzbd.org/wiki/)
