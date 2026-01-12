@@ -56,7 +56,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+          format: !!python/name:pymdownx.superfences.fence_div_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.details
@@ -76,6 +76,9 @@ extra:
     - icon: fontawesome/brands/gitlab
       link: https://gitlab.com/stetter-homelab
   generator: false
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
 
 copyright: Copyright &copy; 2024-2025 John Stetter
 
@@ -97,6 +100,7 @@ nav:
   - Services:
       - Service Catalog: services/index.md
       - Core:
+          - Flame: services/flame.md
           - Traefik: services/traefik.md
           - Vault: services/vault.md
           - Technitium: services/technitium.md

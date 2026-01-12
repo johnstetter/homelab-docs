@@ -437,7 +437,7 @@ VS Code in the browser.
 
 ### Flame
 
-Application dashboard.
+Infrastructure dashboard and start page. Displays all Docker applications and organized bookmarks. See [Flame service documentation](../services/flame.md) for details.
 
 | Property | Value |
 |----------|-------|

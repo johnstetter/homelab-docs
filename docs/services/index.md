@@ -67,7 +67,7 @@ Complete catalog of all services running in the Stetter Homelab with access URLs
 | GitLab | [gitlab.rsdn.io](https://gitlab.rsdn.io) | ctr01 | Source control |
 | code-server | [code.rsdn.io](https://code.rsdn.io) | ctr01 | VS Code |
 | IT-Tools | [tools.rsdn.io](https://tools.rsdn.io) | ctr01 | Developer utilities |
-| Flame | [flame.rsdn.io](https://flame.rsdn.io) | ctr01 | App dashboard |
+| [Flame](flame.md) | [flame.rsdn.io](https://flame.rsdn.io) | ctr01 | Infrastructure dashboard & start page |
 
 ### Home Automation
 
