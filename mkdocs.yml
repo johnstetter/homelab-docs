@@ -115,5 +115,11 @@ nav:
           - Frigate: services/frigate.md
   - Runbooks:
       - Overview: runbooks/index.md
-      - Adding New Stacks: runbooks/new-stack.md
-      - Troubleshooting: runbooks/troubleshooting.md
+      - Deployment:
+          - Adding New Stacks: runbooks/new-stack.md
+      - Operations:
+          - Backup & Restore: runbooks/backup-restore.md
+          - Disaster Recovery: runbooks/disaster-recovery.md
+          - Troubleshooting: runbooks/troubleshooting.md
+      - Infrastructure:
+          - VM Lifecycle: runbooks/vm-lifecycle.md
