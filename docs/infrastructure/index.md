@@ -14,8 +14,7 @@ All infrastructure configuration lives in version-controlled GitLab repositories
 |------------|---------|-------|
 | [vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | VM provisioning and configuration | Packer, OpenTofu, Ansible |
 | [k8s-platform](https://gitlab.com/stetter-homelab/k8s-platform) | Kubernetes cluster management | OpenTofu, Helm |
-| [ctr01-stacks](https://gitlab.com/stetter-homelab/ctr01-stacks) | Docker Compose stacks for ctr01 | Docker Compose |
-| [syn-stacks](https://gitlab.com/stetter-homelab/syn-stacks) | Docker Compose stacks for Synology | Docker Compose |
+| [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | Docker Compose stacks (one repo per stack) | Docker Compose |
 
 ## Provisioning Workflow
 

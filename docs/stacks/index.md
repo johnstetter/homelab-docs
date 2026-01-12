@@ -32,7 +32,6 @@ graph TB
 
     subgraph syn["syn (192.168.1.4)"]
         Technitium[Technitium DNS]
-        PiHole[Pi-hole]
         NodeExporter[Node Exporter]
     end
 
@@ -47,7 +46,7 @@ graph TB
 
 Primary Docker host for most workloads.
 
-**Repository:** [stetter-homelab/ctr01-stacks](https://gitlab.com/stetter-homelab/ctr01-stacks)
+**Repository:** [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) (one repo per stack)
 
 | Stack | Services | Purpose |
 |-------|----------|---------|
@@ -61,19 +60,18 @@ Primary Docker host for most workloads.
 | [frigate](ctr01.md#frigate) | Frigate, MQTT | NVR, object detection |
 | [dev-tools](ctr01.md#dev-tools) | code-server, Flame, IT-Tools | Development |
 | [gitlab](ctr01.md#gitlab) | GitLab CE | Source control, CI/CD |
-| [technitium](ctr01.md#technitium-ctr01) | Technitium DNS | Secondary DNS |
+| [technitium](ctr01.md#technitium-ctr01) | Technitium DNS | Secondary DNS (backup) |
 | [mcp](ctr01.md#mcp) | MCP Servers | AI agent tools |
 
 ### Synology Stacks
 
-Supplementary services on the Synology NAS.
+Core infrastructure services on the Synology NAS. These run separately from ctr01 to ensure critical services (especially DNS) remain stable during ctr01 maintenance.
 
 **Repository:** [stetter-homelab/syn-stacks](https://gitlab.com/stetter-homelab/syn-stacks)
 
 | Stack | Services | Purpose |
 |-------|----------|---------|
-| [technitium](synology.md#technitium) | Technitium DNS | Primary DNS |
-| [pihole](synology.md#pihole) | Pi-hole | Ad blocking |
+| [technitium](synology.md#technitium) | Technitium DNS | **Primary DNS** + ad blocking |
 | [node-exporter](synology.md#node-exporter) | Node Exporter | Synology metrics |
 
 ## Stack Management
@@ -147,6 +145,24 @@ graph LR
 
 ## Updating Stacks
 
+### Renovate (Recommended)
+
+[Renovate](renovate.md) automatically monitors Docker image versions and creates merge requests when updates are available.
+
+**How it works:**
+
+1. Renovate scans `docker-compose.yml` files in all stack repositories
+2. Creates MRs when new image versions are detected
+3. CI validates the changes
+4. You review and merge when ready
+
+**Repositories monitored:**
+
+- [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) - All ctr01 stacks
+- [syn-stacks](https://gitlab.com/stetter-homelab/syn-stacks) - Synology infrastructure stacks
+
+See the [Renovate documentation](renovate.md) for configuration details and the Dependency Dashboard.
+
 ### Manual Updates
 
 ```bash
@@ -172,6 +188,10 @@ Watchtower monitors and updates containers automatically:
 
 !!! warning "Watchtower Exclusions"
     Critical services like Traefik and GitLab are excluded from auto-updates. Update these manually after testing.
+
+!!! tip "Renovate vs Watchtower"
+    - **Renovate** - Version control aware, creates MRs for review, better for production
+    - **Watchtower** - Auto-updates running containers directly, good for non-critical services
 
 ## Backup Strategy
 
@@ -205,5 +225,6 @@ Dashboards available in Grafana:
 
 - [ctr01 Stack Details](ctr01.md)
 - [Synology Stack Details](synology.md)
+- [Renovate Configuration](renovate.md)
 - [Adding New Stacks](../runbooks/new-stack.md)
 - [Service Catalog](../services/index.md)

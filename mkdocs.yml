@@ -3,8 +3,8 @@ site_description: Central documentation hub for stetter-homelab infrastructure
 site_author: John Stetter
 site_url: https://stetter-homelab.gitlab.io/docs
 
-repo_name: stetter-homelab/docs
-repo_url: https://gitlab.com/stetter-homelab/docs
+repo_name: stetter-homelab/homelab-docs
+repo_url: https://gitlab.com/stetter-homelab/homelab-docs
 
 theme:
   name: material
@@ -43,6 +43,9 @@ plugins:
   - tags
 
 markdown_extensions:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -53,7 +56,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+          format: !!python/name:pymdownx.superfences.fence_div_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.details
@@ -74,6 +77,9 @@ extra:
       link: https://gitlab.com/stetter-homelab
   generator: false
 
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+
 copyright: Copyright &copy; 2024-2025 John Stetter
 
 nav:
@@ -90,9 +96,38 @@ nav:
       - Overview: stacks/index.md
       - ctr01 Stacks: stacks/ctr01.md
       - Synology Stacks: stacks/synology.md
+      - Renovate: stacks/renovate.md
   - Services:
       - Service Catalog: services/index.md
+      - Core:
+          - Flame: services/flame.md
+          - Traefik: services/traefik.md
+          - Vault: services/vault.md
+          - Technitium: services/technitium.md
+      - Monitoring:
+          - Prometheus: services/prometheus.md
+          - Grafana: services/grafana.md
+          - Loki: services/loki.md
+      - Management:
+          - Portainer: services/portainer.md
+          - Semaphore: services/semaphore.md
+          - Backrest: services/backrest.md
+      - AI:
+          - Ollama: services/ollama.md
+          - n8n: services/n8n.md
+      - Media:
+          - Plex: services/plex.md
+          - Sonarr: services/sonarr.md
+          - Radarr: services/radarr.md
+      - Security:
+          - Frigate: services/frigate.md
   - Runbooks:
       - Overview: runbooks/index.md
-      - Adding New Stacks: runbooks/new-stack.md
-      - Troubleshooting: runbooks/troubleshooting.md
+      - Deployment:
+          - Adding New Stacks: runbooks/new-stack.md
+      - Operations:
+          - Backup & Restore: runbooks/backup-restore.md
+          - Disaster Recovery: runbooks/disaster-recovery.md
+          - Troubleshooting: runbooks/troubleshooting.md
+      - Infrastructure:
+          - VM Lifecycle: runbooks/vm-lifecycle.md

@@ -69,7 +69,7 @@ The Stetter Homelab runs on a combination of Proxmox VE virtualization, Docker c
 - **DNS Provider:** Cloudflare
 - **SSL/TLS:** Let's Encrypt wildcard certificates via Traefik
 - **Internal DNS:** Technitium (primary on syn, secondary on ctr01)
-- **Ad Blocking:** Pi-hole on Synology
+- **Ad Blocking:** Technitium DNS (built-in blocking)
 
 ## Repository Structure
 
@@ -77,11 +77,10 @@ All infrastructure is managed as code across multiple GitLab repositories:
 
 | Repository | Purpose |
 |------------|---------|
-| [stetter-homelab/docs](https://gitlab.com/stetter-homelab/docs) | This documentation site |
+| [stetter-homelab/homelab-docs](https://gitlab.com/stetter-homelab/homelab-docs) | This documentation site |
 | [stetter-homelab/vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | Packer, OpenTofu, and Ansible for VM provisioning |
 | [stetter-homelab/k8s-platform](https://gitlab.com/stetter-homelab/k8s-platform) | Kubernetes cluster configuration |
-| [stetter-homelab/ctr01-stacks](https://gitlab.com/stetter-homelab/ctr01-stacks) | Docker Compose stacks for ctr01 |
-| [stetter-homelab/syn-stacks](https://gitlab.com/stetter-homelab/syn-stacks) | Docker Compose stacks for Synology |
+| [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | Docker Compose stacks (one repo per stack) |
 
 ## Getting Started
 

@@ -10,9 +10,8 @@ Complete catalog of all services running in the Stetter Homelab with access URLs
 |---------|-----|------|---------|
 | Traefik | [traefik.rsdn.io](https://traefik.rsdn.io) | ctr01 | Reverse proxy dashboard |
 | Vault | [vault.rsdn.io](https://vault.rsdn.io) | ctr01 | Secrets management |
-| Technitium (Primary) | [dns.rsdn.io](https://dns.rsdn.io) | syn | Primary DNS |
+| Technitium (Primary) | [dns.rsdn.io](https://dns.rsdn.io) | syn | Primary DNS + ad blocking |
 | Technitium (Secondary) | [dns-ctr01.rsdn.io](https://dns-ctr01.rsdn.io) | ctr01 | Secondary DNS |
-| Pi-hole | [pihole.rsdn.io](https://pihole.rsdn.io) | syn | Ad blocking |
 
 ### Monitoring & Observability
 
@@ -68,7 +67,7 @@ Complete catalog of all services running in the Stetter Homelab with access URLs
 | GitLab | [gitlab.rsdn.io](https://gitlab.rsdn.io) | ctr01 | Source control |
 | code-server | [code.rsdn.io](https://code.rsdn.io) | ctr01 | VS Code |
 | IT-Tools | [tools.rsdn.io](https://tools.rsdn.io) | ctr01 | Developer utilities |
-| Flame | [flame.rsdn.io](https://flame.rsdn.io) | ctr01 | App dashboard |
+| [Flame](flame.md) | [flame.rsdn.io](https://flame.rsdn.io) | ctr01 | Infrastructure dashboard & start page |
 
 ### Home Automation
 

@@ -66,24 +66,23 @@ See [Stacks Overview](../stacks/index.md) for complete details.
 ```mermaid
 graph LR
     subgraph Synology["Synology DS1621+"]
-        VOL1[Volume 1 - SSD Pool]
-        VOL2[Volume 2 - HDD Pool]
+        VOL1["Volume 1"]
     end
 
     subgraph NFS["NFS Shares"]
-        DOCKER[/volume1/docker]
-        MEDIA[/volume1/media]
-        BACKUP[/volume2/backups]
+        DOCKER["/volume1/docker"]
+        MEDIA["/volume1/media"]
+        BACKUP["/volume1/backups"]
     end
 
     subgraph CTR01["ctr01 Mounts"]
-        MNTDOCKER[/mnt/docker]
-        MNTMEDIA[/mnt/media]
+        MNTDOCKER["/mnt/docker"]
+        MNTMEDIA["/mnt/media"]
     end
 
     VOL1 --> DOCKER
     VOL1 --> MEDIA
-    VOL2 --> BACKUP
+    VOL1 --> BACKUP
     DOCKER --> MNTDOCKER
     MEDIA --> MNTMEDIA
 ```
@@ -92,8 +91,7 @@ graph LR
 
 | Tier | Location | Purpose |
 |------|----------|---------|
-| **Fast** | Synology SSD Pool | Docker volumes, databases, active workloads |
-| **Bulk** | Synology HDD Pool | Media files, backups, archives |
+| **NAS** | Synology Volume 1 | Docker volumes, media, backups |
 | **Local** | VM local storage | OS, temporary files, swap |
 
 ## Network Architecture
@@ -120,7 +118,7 @@ See [Network Topology](network.md) for detailed network documentation.
 1. Internal services communicate over Docker networks
 2. Secrets managed via HashiCorp Vault
 3. SSH access via bastion host (dev01)
-4. GPG-signed commits required for all code changes
+4. SSH-signed commits required for all code changes
 
 ## Monitoring and Observability
 

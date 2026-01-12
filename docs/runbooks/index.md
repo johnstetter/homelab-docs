@@ -10,10 +10,18 @@ Operational procedures and guides for managing the Stetter Homelab.
 |---------|-------------|
 | [Adding New Stacks](new-stack.md) | Complete guide to deploying a new Docker Compose stack |
 
+### Infrastructure
+
+| Runbook | Description |
+|---------|-------------|
+| [VM Lifecycle](vm-lifecycle.md) | Creating, updating, and rebuilding VMs with Packer, OpenTofu, and Ansible |
+
 ### Operations
 
 | Runbook | Description |
 |---------|-------------|
+| [Disaster Recovery](disaster-recovery.md) | Complete recovery procedures for all failure scenarios |
+| [Backup and Restore](backup-restore.md) | Complete backup strategy and recovery procedures |
 | [Troubleshooting](troubleshooting.md) | Common issues and solutions |
 
 ## Quick Reference

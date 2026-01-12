@@ -84,8 +84,13 @@ The RTX 2000E ADA is passed through to ctr01 for:
 
 | Pool | Type | Capacity | RAID | Purpose |
 |------|------|----------|------|---------|
-| Volume 1 | NVMe SSD | 2TB | RAID 1 | Docker, databases, active workloads |
-| Volume 2 | HDD | 24TB | SHR-2 | Media, backups, archives |
+| Volume 1 | HDD (5x 10.9TB) | 41.9TB | SHR | Docker, media, backups |
+
+**Cache:**
+
+| Drive | Type | Capacity | Purpose |
+|-------|------|----------|---------|
+| M.2 Drive 1 | Samsung SSD | 931.5GB | SSD read/write cache |
 
 **NFS Exports:**
 
@@ -93,13 +98,12 @@ The RTX 2000E ADA is passed through to ctr01 for:
 |--------|------|--------|---------|
 | docker | /volume1/docker | ctr01 | Container persistent storage |
 | media | /volume1/media | ctr01 | Media library |
-| backups | /volume2/backups | All hosts | Backup destination |
+| backups | /volume1/backups | All hosts | Backup destination |
 
 **Services Running:**
 
 - Docker (Container Manager)
-- Technitium DNS (Primary)
-- Pi-hole (Ad blocking)
+- Technitium DNS (Primary + ad blocking)
 - Node Exporter (Metrics)
 
 ## Network
