@@ -3,8 +3,8 @@ site_description: Central documentation hub for stetter-homelab infrastructure
 site_author: John Stetter
 site_url: https://stetter-homelab.gitlab.io/docs
 
-repo_name: stetter-homelab/docs
-repo_url: https://gitlab.com/stetter-homelab/docs
+repo_name: stetter-homelab/homelab-docs
+repo_url: https://gitlab.com/stetter-homelab/homelab-docs
 
 theme:
   name: material
@@ -92,6 +92,12 @@ nav:
       - Synology Stacks: stacks/synology.md
   - Services:
       - Service Catalog: services/index.md
+      - Vault: services/vault.md
+      - Traefik: services/traefik.md
+      - Grafana: services/grafana.md
+      - Portainer: services/portainer.md
+      - Frigate: services/frigate.md
+      - Plex: services/plex.md
   - Runbooks:
       - Overview: runbooks/index.md
       - Adding New Stacks: runbooks/new-stack.md
