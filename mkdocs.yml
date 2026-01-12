@@ -1,7 +1,7 @@
 site_name: Stetter Homelab
 site_description: Central documentation hub for stetter-homelab infrastructure
 site_author: John Stetter
-site_url: https://stetter-homelab.gitlab.io/docs
+site_url: https://homelab-docs-e84442.gitlab.io/
 
 repo_name: stetter-homelab/homelab-docs
 repo_url: https://gitlab.com/stetter-homelab/homelab-docs
