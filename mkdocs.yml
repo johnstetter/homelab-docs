@@ -9,32 +9,24 @@ repo_url: https://gitlab.com/stetter-homelab/homelab-docs
 theme:
   name: material
   palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
+    scheme: slate
+    primary: black
+    accent: red
   features:
+    - navigation.instant
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
     - navigation.expand
     - navigation.path
     - navigation.top
+    - navigation.tracking
     - search.suggest
     - search.highlight
     - content.tabs.link
     - content.code.copy
     - content.code.annotate
+    - toc.follow
   icon:
     repo: fontawesome/brands/gitlab
 
@@ -56,7 +48,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_div_format
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.details
@@ -77,8 +69,8 @@ extra:
       link: https://gitlab.com/stetter-homelab
   generator: false
 
-extra_javascript:
-  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+extra_css:
+  - stylesheets/extra.css
 
 copyright: Copyright &copy; 2024-2025 John Stetter
 
