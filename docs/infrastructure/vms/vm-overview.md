@@ -7,7 +7,7 @@ Comprehensive overview of all virtual machines in the Stetter Homelab.
 | VM Name | Purpose | OS | vCPUs | RAM | Disk | Management IP | Status |
 |---------|---------|-----|-------|-----|------|---------------|--------|
 | **ctr01** | Docker host | Debian 13 | 10 | 24GB | 100GB | 192.168.1.20 | ✅ Active |
-| **dev01** | Development/bastion | Ubuntu 24.04 | 4 | 8GB | 50GB | 192.168.1.21 | ✅ Active |
+| **dev01** | Development/bastion | Ubuntu 24.04 | 4 | 16GB | 50GB | 192.168.1.21 | ✅ Active |
 | **sec01** | Security testing | Kali Linux | 4 | 12GB | 120GB | 192.168.1.25 | 🚧 In Development |
 
 ## VM Architecture Overview
@@ -50,7 +50,7 @@ Comprehensive overview of all virtual machines in the Stetter Homelab.
 - **Storage**: NFS-mounted data, local SSD for container runtime
 - **Networking**: Dual NIC for management and high-speed storage
 
-[View ctr01 Details →](../../runbooks/vm-lifecycle.md#current-vms)
+[View ctr01 Details →](ctr01/README.md)
 
 ### Development (dev01)
 **Purpose**: Development environment and homelab bastion host
@@ -60,7 +60,7 @@ Comprehensive overview of all virtual machines in the Stetter Homelab.
 - **Access**: SSH gateway for secure homelab access
 - **Resources**: Moderate allocation for development workflows
 
-[View dev01 Details →](../../runbooks/vm-lifecycle.md#current-vms)
+[View dev01 Details →](dev01/README.md)
 
 ### Security Testing (sec01)
 **Purpose**: Dedicated security research and penetration testing
@@ -173,7 +173,7 @@ VMs are provisioned using infrastructure-as-code:
 | Resource | ctr01 | dev01 | sec01 | Total Used | Host Capacity | Available |
 |----------|-------|-------|-------|------------|---------------|-----------|
 | vCPUs | 10 | 4 | 4 | 18 cores | 32 cores | 14 cores |
-| RAM | 24GB | 8GB | 12GB | 44GB | 128GB | 84GB |
+| RAM | 24GB | 16GB | 12GB | 52GB | 128GB | 76GB |
 | Storage | 100GB | 50GB | 120GB | 270GB | 2TB | 1730GB |
 
 ### Growth Planning
@@ -212,6 +212,25 @@ VMs are provisioned using infrastructure-as-code:
 - **GPU Expansion**: Additional GPU passthrough for AI workloads
 - **Storage Expansion**: Additional NFS capacity for growing datasets
 - **Network Upgrades**: 25G/40G network for enhanced performance
+
+## VM Documentation
+
+### Detailed VM Guides
+
+| VM | Purpose | Documentation |
+|----|---------|--------------|
+| **dev01** | Development/Bastion | [dev01 VM Guide →](dev01/README.md) |
+| **ctr01** | Docker Host | [ctr01 VM Guide →](ctr01/README.md) |
+| **sec01** | Security Testing | [sec01 VM Guide →](sec01/README.md) |
+
+Each VM guide includes:
+- Complete specifications and architecture
+- Network configuration details
+- Quick start guides and common workflows
+- Pre-installed tools and setup procedures
+- Performance optimization recommendations
+- Security considerations and best practices
+- Troubleshooting and support information
 
 ## Related Documentation
 
