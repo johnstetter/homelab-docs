@@ -43,6 +43,7 @@ vm-platform/
 |---------|----------|-------|-----|------|---------|
 | ctr01 | Debian 13 | 8 | 32GB | 100GB | Docker host |
 | dev01 | Ubuntu 24.04 | 4 | 16GB | 50GB | Dev/bastion |
+| sec01 | Kali Linux | 4 | 12GB | 120GB | Security testing |
 
 ## Packer Templates
 
@@ -303,6 +304,8 @@ devbox run tofu apply
 
 ## Related Documentation
 
+- [VM Overview](vms/vm-overview.md) - Complete VM inventory and specifications
+- [sec01 Security VM](vms/sec01/README.md) - Kali Linux security testing VM
 - [Hardware Inventory](../architecture/hardware.md) - VM host specifications
 - [Network Topology](../architecture/network.md) - Network configuration
 - [Adding New Stacks](../runbooks/new-stack.md) - Post-VM application deployment
