@@ -239,13 +239,13 @@ iotop
 - [Security Tools Reference](security-tools.md) - Detailed tool documentation
 - [Workspace Organization Guide](workspace-guide.md) - Evidence handling and workflows
 - [Troubleshooting Guide](troubleshooting.md) - Common issues and solutions
-- [VM Lifecycle Management](../../runbooks/vm-lifecycle.md) - VM management procedures
+- [VM Lifecycle Management](../../../runbooks/vm-lifecycle.md) - VM management procedures
 
 ## Support
 
 For VM provisioning and management issues:
 - **Repository**: [vm-platform](https://gitlab.com/stetter-homelab/vm-platform)
-- **Infrastructure docs**: [VM Platform](../vm-platform.md)
+- **Infrastructure docs**: [VM Platform](../../vm-platform.md)
 
 For tool-specific questions:
 - **Kali Documentation**: [docs.kali.org](https://docs.kali.org)

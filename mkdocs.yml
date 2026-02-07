@@ -83,6 +83,13 @@ nav:
   - Infrastructure:
       - Overview: infrastructure/index.md
       - VM Platform: infrastructure/vm-platform.md
+      - VM Overview: infrastructure/vms/vm-overview.md
+      - Virtual Machines:
+          - sec01 Security VM: infrastructure/vms/sec01/README.md
+          - X11 Forwarding: infrastructure/vms/sec01/x11-forwarding.md
+          - Security Tools: infrastructure/vms/sec01/security-tools.md
+          - Workspace Guide: infrastructure/vms/sec01/workspace-guide.md
+          - Troubleshooting: infrastructure/vms/sec01/troubleshooting.md
       - Kubernetes Platform: infrastructure/k8s-platform.md
   - Stacks:
       - Overview: stacks/index.md

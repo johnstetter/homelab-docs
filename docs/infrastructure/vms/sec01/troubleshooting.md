@@ -795,4 +795,4 @@ grep -i x11 ~/.xsession-errors
 - [X11 Forwarding Setup](x11-forwarding.md) - Detailed X11 configuration
 - [Security Tools Reference](security-tools.md) - Tool-specific documentation
 - [Workspace Guide](workspace-guide.md) - Evidence handling procedures
-- [VM Lifecycle Management](../../runbooks/vm-lifecycle.md) - VM operations
+- [VM Lifecycle Management](../../../runbooks/vm-lifecycle.md) - VM operations
