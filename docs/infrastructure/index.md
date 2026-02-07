@@ -188,5 +188,7 @@ Sensitive configuration in `.env` files:
 ## Next Steps
 
 - [VM Platform Details](vm-platform.md)
+- [VM Overview and Specifications](vms/vm-overview.md)
+- [sec01 Security Testing VM](vms/sec01/README.md)
 - [Kubernetes Platform Details](k8s-platform.md)
 - [Adding New Stacks](../runbooks/new-stack.md)

@@ -20,6 +20,7 @@ VMs are managed through the **vm-platform** repository using:
 |----|---------|-----|-------|-----|
 | ctr01 | Docker host | Debian 13 | 10 cores, 24GB RAM, RTX2000E ADA | 192.168.1.20 / 10.0.10.20 |
 | dev01 | Development/bastion | Ubuntu 24.04 | 4 cores, 8GB RAM | 192.168.1.21 |
+| sec01 | Security testing | Kali Linux | 4 cores, 12GB RAM, 120GB disk | 192.168.1.25 / 10.0.10.25 |
 
 **Infrastructure:**
 
@@ -566,5 +567,7 @@ tofu state rm module.ctr01.proxmox_vm_qemu.vm
 
 - [Adding New Stacks](new-stack.md)
 - [Troubleshooting](troubleshooting.md)
+- [VM Overview](../infrastructure/vms/vm-overview.md) - Complete VM inventory and specifications
+- [sec01 Security VM](../infrastructure/vms/sec01/README.md) - Kali Linux security testing VM
 - [vm-platform Repository](https://gitlab.com/stetter-homelab/vm-platform)
 - [compose-stacks Repository](https://gitlab.com/stetter-homelab/compose-stacks)
