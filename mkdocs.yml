@@ -85,6 +85,8 @@ nav:
       - VM Platform: infrastructure/vm-platform.md
       - VM Overview: infrastructure/vms/vm-overview.md
       - Virtual Machines:
+          - dev01 Development VM: infrastructure/vms/dev01/README.md
+          - ctr01 Docker Host VM: infrastructure/vms/ctr01/README.md
           - sec01 Security VM: infrastructure/vms/sec01/README.md
           - X11 Forwarding: infrastructure/vms/sec01/x11-forwarding.md
           - Security Tools: infrastructure/vms/sec01/security-tools.md
