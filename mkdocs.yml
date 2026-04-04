@@ -97,6 +97,7 @@ nav:
           - Workspace Guide: infrastructure/vms/sec01/workspace-guide.md
           - Troubleshooting: infrastructure/vms/sec01/troubleshooting.md
       - Kubernetes Platform: infrastructure/k8s-platform.md
+      - Talos Linux Platform: infrastructure/talos-platform.md
   - Stacks:
       - Overview: stacks/index.md
       - ctr01 Stacks: stacks/ctr01.md
