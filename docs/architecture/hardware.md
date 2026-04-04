@@ -7,6 +7,7 @@ Complete inventory of all hardware in the Stetter Homelab.
 | Host | Role | Location | Status |
 |------|------|----------|--------|
 | pve-ms-a2 | Primary Hypervisor | Rack | Active |
+| core.rsdn.io | K8s Development Sandbox | Rack | Active |
 | pve-tc1 | Home Automation | Rack | Active |
 | syn | NAS/Storage | Rack | Active |
 | rtr | Network Gateway | Rack | Active |
@@ -42,6 +43,49 @@ The RTX 2000E ADA is passed through to ctr01 for:
 - Frigate object detection
 - Ollama LLM inference
 - Whisper speech-to-text
+
+### core.rsdn.io (K8s Development Sandbox)
+
+**Supermicro X9DRL-3F/iF Custom Build**
+
+| Component | Specification |
+|-----------|---------------|
+| **CPU** | Dual Intel Xeon E5-2670 v1 @ 2.60GHz (32C total: 2×8C×2T) |
+| **RAM** | 256GB DDR3 ECC |
+| **Storage** | Multiple NVMe + SATA (VMs + Templates) + 42TB NFS storage |
+| **Network** | 1GbE + NFS access to Synology |
+| **IP Address** | 192.168.1.5 |
+| **OS** | Proxmox VE 8.x |
+
+**Role:** Kubernetes and Talos Linux development sandbox with extensive VM experimentation capacity.
+
+**Active VM Projects:**
+
+| Project | VM Range | Count | Specs | Purpose |
+|---------|----------|-------|-------|---------|
+| **Production K3s** | 106-115 | 7 VMs | 16GB each | HA K8s cluster |
+| **Talos Development** | 126-131 | 6 VMs | 4GB each | Talos Linux testing |
+| **NixOS/Terraform** | 120-125 | 6 VMs | 2-4GB each | Infrastructure-as-code |
+| **RHEL Testing** | 100-102 | 3 VMs | 8GB each | Enterprise Linux testing |
+| **Utility** | 200 | 1 VM | 8GB | Ansible automation |
+| **Templates** | 9000+ | 3 templates | - | Debian, Ubuntu, NixOS |
+
+**Total Active VMs:** ~26 VMs utilizing 256GB RAM capacity
+
+**Storage Strategy:**
+- **VM Storage**: Local NVMe/SATA for VM disks  
+- **Persistent Data**: 42TB NFS mount for container storage
+- **Templates**: Optimized Packer-built base images
+
+**Network Configuration:**
+- **Management**: 192.168.1.0/24 via main switch
+- **Storage**: Direct NFS access to /volume1/* exports
+- **Inter-VM**: Isolated networks per project
+
+**Key Projects:**
+- **talos-platform**: CLI-based Talos cluster management
+- **talos-terraform-poc**: Terraform provider approach
+- **k8s-platform**: NixOS-based Kubernetes development
 
 ### pve-tc1 (Home Automation)
 
