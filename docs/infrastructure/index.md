@@ -10,11 +10,13 @@ All infrastructure configuration lives in version-controlled GitLab repositories
 
 ## Repository Structure
 
-| Repository | Purpose | Tools |
-|------------|---------|-------|
-| [vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | VM provisioning and configuration | Packer, OpenTofu, Ansible |
-| [k8s-platform](https://gitlab.com/stetter-homelab/k8s-platform) | Kubernetes cluster management | OpenTofu, Helm |
-| [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | Docker Compose stacks (one repo per stack) | Docker Compose |
+| Repository | Purpose | Tools | Status |
+|------------|---------|-------|--------|
+| [vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | VM provisioning and configuration | Packer, OpenTofu, Ansible | ✅ Active |
+| [k8s-platform](https://gitlab.com/stetter-homelab/k8s-platform) | Kubernetes cluster management | OpenTofu, Helm | ✅ Active |
+| [talos-platform](https://gitlab.com/stetter-homelab/talos-platform) | Talos Linux cluster management | talosctl, kubectl | ✅ Active |
+| [talos-terraform-poc](https://gitlab.com/stetter-homelab/talos-terraform-poc) | Talos Infrastructure as Code | Terraform, Talos provider | 🔄 Development |
+| [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | Docker Compose stacks (one repo per stack) | Docker Compose | ✅ Active |
 
 ## Provisioning Workflow
 
@@ -87,16 +89,36 @@ devbox run ansible-playbook site.yml
 
 ### Docker Compose
 
-Manages containerized applications:
+Manages stateful containerized applications:
 
-- **Location:** ctr01 and syn
-- **Organization:** Stacks by function
+- **Primary Location:** ctr01 (MS-A2)
+- **Secondary Location:** syn (Synology Container Manager)
+- **Organization:** Stacks by function (compose-stacks repositories)
 - **Deployment:** GitLab CI/CD or manual
+- **Use Case:** Databases, media services, core infrastructure
 
 ```bash
 # Deploy a stack
-cd ctr01-stacks/monitoring
+cd ~/projects/compose-stacks/monitoring
 docker-compose up -d
+```
+
+### Kubernetes
+
+Manages stateless and experimental workloads:
+
+- **Location:** core.rsdn.io (multiple clusters)
+- **Distributions:** K3s, Talos Linux
+- **Management:** kubectl, talosctl, Terraform
+- **Use Case:** Development, testing, stateless applications
+
+```bash
+# Access production K8s cluster
+ssh core.rsdn.io
+kubectl get nodes
+
+# Access Talos cluster
+talosctl --nodes 192.168.1.126 get members
 ```
 
 ## Development Environment
@@ -191,4 +213,5 @@ Sensitive configuration in `.env` files:
 - [VM Overview and Specifications](vms/vm-overview.md)
 - [sec01 Security Testing VM](vms/sec01/README.md)
 - [Kubernetes Platform Details](k8s-platform.md)
+- [Talos Linux Platform](talos-platform.md)
 - [Adding New Stacks](../runbooks/new-stack.md)
