@@ -50,18 +50,28 @@ Welcome to the central documentation hub for the Stetter Homelab infrastructure.
 
 ## Infrastructure Overview
 
-The Stetter Homelab runs on a combination of Proxmox VE virtualization, Docker containers, and a Synology NAS for storage and supplementary services.
+The Stetter Homelab runs a **hybrid architecture** with specialized Proxmox hosts, Docker containers, Kubernetes clusters, and a Synology NAS for centralized storage.
 
 ### Core Components
 
 | Component | Host | Description |
 |-----------|------|-------------|
-| **Proxmox VE** | pve-ms-a2 | Primary hypervisor running on Minisforum MS-A2 |
-| **Docker Host** | ctr01 | Debian 13 VM hosting all primary Docker stacks |
+| **Docker Hypervisor** | pve-ms-a2 | Minisforum MS-A2 optimized for Docker workloads + GPU |
+| **K8s Sandbox** | core.rsdn.io | Dell PowerEdge for Kubernetes development (256GB RAM) |
+| **Docker Host** | ctr01 | Debian 13 VM hosting Docker stacks with RTX2000E ADA |
 | **Development** | dev01 | Ubuntu 24.04 VM for development and bastion access |
-| **NAS** | syn | Synology DS1621+ for storage and secondary services |
-| **Home Automation** | pve-tc1 | ThinkCentre running Home Assistant |
-| **Network** | rtr | UniFi Dream Machine Pro |
+| **Security Testing** | sec01 | Kali Linux VM for security testing and penetration testing |
+| **Kubernetes Clusters** | core.rsdn.io | Production K3s, Talos Linux, and NixOS dev clusters |
+| **NAS** | syn | Synology DS1621+ with 10GbE for high-speed storage |
+| **Home Automation** | pve-tc1 | ThinkCentre running dedicated Home Assistant |
+| **Network** | rtr | UniFi Dream Machine Pro with 10GbE uplinks |
+
+### Infrastructure Philosophy
+
+**Hybrid Approach**:
+- **MS-A2**: Optimized for Docker workloads with GPU passthrough
+- **core.rsdn.io**: Dedicated to Kubernetes experimentation and development
+- **Specialization**: Each host optimized for specific workload types
 
 ### Domain and DNS
 
@@ -75,12 +85,21 @@ The Stetter Homelab runs on a combination of Proxmox VE virtualization, Docker c
 
 All infrastructure is managed as code across multiple GitLab repositories:
 
-| Repository | Purpose |
-|------------|---------|
-| [stetter-homelab/homelab-docs](https://gitlab.com/stetter-homelab/homelab-docs) | This documentation site |
-| [stetter-homelab/vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | Packer, OpenTofu, and Ansible for VM provisioning |
-| [stetter-homelab/k8s-platform](https://gitlab.com/stetter-homelab/k8s-platform) | Kubernetes cluster configuration |
-| [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | Docker Compose stacks (one repo per stack) |
+| Repository | Purpose | Status |
+|------------|---------|--------|
+| [stetter-homelab/homelab-docs](https://gitlab.com/stetter-homelab/homelab-docs) | This documentation site | ✅ Active |
+| [stetter-homelab/vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | Packer, OpenTofu, and Ansible for VM provisioning | ✅ Active |
+| [stetter-homelab/k8s-platform](https://gitlab.com/stetter-homelab/k8s-platform) | NixOS-based Kubernetes cluster management | ✅ Active |
+| [stetter-homelab/talos-platform](https://gitlab.com/stetter-homelab/talos-platform) | CLI-based Talos Linux cluster management | ✅ Active |
+| [stetter-homelab/talos-terraform-poc](https://gitlab.com/stetter-homelab/talos-terraform-poc) | Terraform provider approach for Talos | 🔄 Development |
+| [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | Docker Compose stacks (multiple repos) | ✅ Active |
+
+### Active Projects Summary
+
+- **Docker Platform**: Stateful services on ctr01 (MS-A2)
+- **Kubernetes Development**: Multiple clusters on core.rsdn.io
+- **Talos Linux**: Two parallel approaches (CLI vs Terraform)
+- **Security Testing**: Kali Linux environment on sec01
 
 ## Getting Started
 
