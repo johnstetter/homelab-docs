@@ -19,16 +19,28 @@ graph TB
         LE[Let's Encrypt]
     end
 
-    subgraph Network["Network (192.168.1.0/24)"]
+    subgraph Network["Management Network (192.168.1.0/24)"]
         RTR[UniFi Dream Machine Pro<br/>192.168.1.1]
 
-        subgraph Proxmox["pve-ms-a2 (192.168.1.12)"]
+        subgraph MS_A2["pve-ms-a2 (192.168.1.12)"]
             CTR01[ctr01 - Docker Host<br/>192.168.1.20]
             DEV01[dev01 - Dev/Bastion<br/>192.168.1.21]
+            SEC01[sec01 - Security Testing<br/>192.168.1.25]
+        end
+
+        subgraph CORE["core.rsdn.io (192.168.1.5)"]
+            K8S_PROD[Production K8s Cluster<br/>VMs 106-115]
+            TALOS_DEV[Talos Development<br/>VMs 126-131]
+            K8S_DEV[NixOS/Terraform K8s<br/>VMs 120-125]
         end
 
         SYN[Synology DS1621+<br/>192.168.1.4]
         TC1[pve-tc1 - Home Assistant<br/>192.168.1.11]
+    end
+
+    subgraph Storage["Storage Network (10.0.10.0/24)"]
+        SYN10G[Synology 10GbE<br/>10.0.10.4]
+        CTR01_10G[ctr01 Storage<br/>10.0.10.20]
     end
 
     CF --> RTR
@@ -36,18 +48,40 @@ graph TB
     RTR --> CTR01
     RTR --> SYN
     RTR --> TC1
+    RTR --> CORE
     CTR01 <--> SYN
     DEV01 --> CTR01
+    
+    %% 10GbE Storage Network
+    SYN10G <--> CTR01_10G
+    CTR01 -.-> CTR01_10G
+    SYN -.-> SYN10G
+
+    %% K8s Clusters
+    CORE --> SYN
 ```
 
 ## Virtualization Layer
 
-The primary hypervisor is **Proxmox VE** running on the Minisforum MS-A2. This hosts:
+**Hybrid Proxmox Architecture** with specialized workload separation:
 
-- **ctr01** - Primary Docker host (Debian 13)
-- **dev01** - Development and bastion VM (Ubuntu 24.04)
+### MS-A2 Hypervisor (Docker-focused)
+**Proxmox VE** on Minisforum MS-A2 optimized for Docker workloads:
 
-The ThinkCentre (pve-tc1) runs a separate Proxmox instance dedicated to Home Assistant.
+- **ctr01** - Docker host with GPU passthrough (Debian 13)
+- **dev01** - Development and bastion VM (Ubuntu 24.04) 
+- **sec01** - Security testing environment (Kali Linux)
+
+### core.rsdn.io Hypervisor (K8s-focused)
+**Proxmox VE** on Dell PowerEdge optimized for Kubernetes experimentation:
+
+- **Production K8s** - 7-VM cluster (3 control + 4 workers)
+- **Talos Development** - 6-VM cluster for Talos Linux testing
+- **NixOS/Terraform K8s** - 6-VM development environment
+- **Utility VMs** - Testing and ansible infrastructure
+
+### Dedicated Hosts
+- **pve-tc1** - ThinkCentre running dedicated Home Assistant
 
 ## Container Orchestration
 
@@ -66,33 +100,50 @@ See [Stacks Overview](../stacks/index.md) for complete details.
 ```mermaid
 graph LR
     subgraph Synology["Synology DS1621+"]
-        VOL1["Volume 1"]
+        VOL1["Volume 1<br/>42TB SHR"]
+        E10G["E10G21-F2<br/>Dual 10GbE"]
     end
 
     subgraph NFS["NFS Shares"]
         DOCKER["/volume1/docker"]
         MEDIA["/volume1/media"]
+        K8S["/volume1/k8s"]
+        SECURITY["/volume1/security"]
         BACKUP["/volume1/backups"]
     end
 
-    subgraph CTR01["ctr01 Mounts"]
-        MNTDOCKER["/mnt/docker"]
-        MNTMEDIA["/mnt/media"]
+    subgraph Networks["Storage Networks"]
+        NET10G["10.0.10.0/24<br/>10GbE MTU 9000"]
+        NET1G["192.168.1.0/24<br/>1GbE"]
+    end
+
+    subgraph Mounts["Host Mounts"]
+        MS_A2["MS-A2 VMs<br/>/mnt/synology/*"]
+        CORE["core.rsdn.io VMs<br/>/mnt/k8s/*"]
     end
 
     VOL1 --> DOCKER
     VOL1 --> MEDIA
+    VOL1 --> K8S
+    VOL1 --> SECURITY
     VOL1 --> BACKUP
-    DOCKER --> MNTDOCKER
-    MEDIA --> MNTMEDIA
+    
+    DOCKER --> NET10G
+    MEDIA --> NET10G
+    SECURITY --> NET10G
+    K8S --> NET1G
+    
+    NET10G --> MS_A2
+    NET1G --> CORE
 ```
 
 ### Storage Tiers
 
-| Tier | Location | Purpose |
-|------|----------|---------|
-| **NAS** | Synology Volume 1 | Docker volumes, media, backups |
-| **Local** | VM local storage | OS, temporary files, swap |
+| Tier | Network | Performance | Purpose |
+|------|---------|-------------|---------|
+| **10GbE Storage** | 10.0.10.0/24 | ~1GB/s | MS-A2 Docker/media workloads |
+| **1GbE Storage** | 192.168.1.0/24 | ~100MB/s | core.rsdn.io K8s clusters |
+| **Local NVMe** | VM hosts | ~2GB/s | VM disks, OS, temporary files |
 
 ## Network Architecture
 
