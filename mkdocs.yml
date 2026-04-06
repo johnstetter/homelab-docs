@@ -68,11 +68,15 @@ extra:
     - icon: fontawesome/brands/gitlab
       link: https://gitlab.com/stetter-homelab
   generator: false
+  version:
+    provider: mike
 
 extra_css:
   - stylesheets/extra.css
 
-copyright: Copyright &copy; 2024-2025 John Stetter
+copyright: |
+  Copyright &copy; 2024-2026 John Stetter<br/>
+  <small>Built from commit <a href="https://gitlab.com/stetter-homelab/homelab-docs/-/commit/17def9e">17def9e</a> on 2026-04-03 23:30 UTC</small>
 
 nav:
   - Home: index.md
