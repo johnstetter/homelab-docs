@@ -1,307 +1,109 @@
 # Traefik
 
-Traefik reverse proxy for routing and SSL termination across all services.
-
-## Access
+The single reverse proxy for every `*.rsdn.io` name and for `stetter.io`.
 
 | Property | Value |
 |----------|-------|
-| **Dashboard** | [traefik.rsdn.io](https://traefik.rsdn.io) |
-| **Stack** | [compose-stacks/core](https://gitlab.com/stetter-homelab/compose-stacks/core) |
-| **Ports** | 80 (HTTP), 443 (HTTPS) |
-| **Image** | `traefik:v3.6` |
+| **Dashboard** | [traefik.rsdn.io](https://traefik.rsdn.io) (Authentik, `Homelab Admins` only) |
+| **Stack** | [compose-stacks/core](https://gitlab.com/stetter-homelab/compose-stacks/core) on ctr01 |
+| **Image** | `traefik:v3.7` (digest-pinned, Renovate) |
+| **DNS name** | `rprx.rsdn.io` → 192.168.1.20; services CNAME to it |
+| **Ports** | 80 `web`, 443 `websecure`, 8443 `websecure-public` |
 
-## Authentication
+## Entrypoints
 
-The dashboard uses Traefik's built-in basic auth middleware.
+Traefik matches on SNI/`Host`, not DNS, so anyone who can reach an entrypoint can reach every router on it by guessing hostnames. Exposure is decided per entrypoint:
 
-**Credentials:** Check `.env` in the core stack or your password manager.
+| Entrypoint | Port | Reachable from | Use |
+|------------|------|----------------|-----|
+| `web` | 80 | LAN | Permanent redirect to `websecure` |
+| `websecure` | 443 | LAN, tailnet | **Default.** Every internal router |
+| `websecure-public` | 8443 | Internet: the UDM Pro forwards WAN 443 here | Opt-in per router |
 
----
+Both TLS entrypoints use the `cloudflare` resolver with a wildcard `rsdn.io` / `*.rsdn.io` certificate (DNS-01, so nothing needs port 80 from outside), and trust `X-Forwarded-*` from loopback, the LAN, Docker and Cloudflare's ranges.
 
-## Dashboard
+Routers on `websecure-public` today: `stetter-io` (Cloudflare IPs only), `jellyfin` and `jellyfin-auth` (`jf.rsdn.io`), and `seerr` (`requests.rsdn.io`). See [Network Topology](../architecture/network.md#reverse-proxy-traefik).
 
-The Traefik dashboard at [traefik.rsdn.io](https://traefik.rsdn.io) shows:
-
-- **Routers** - All configured routes and their status
-- **Services** - Backend services and health
-- **Middlewares** - Active middleware chains
-- **Entrypoints** - Listening ports (web:80, websecure:443)
-
-### Quick Health Check
-
-1. Visit [traefik.rsdn.io](https://traefik.rsdn.io)
-2. Check "HTTP Routers" for green status indicators
-3. Verify your service appears in the list
-
----
-
-## Common Operations
-
-### Add a New Docker Service
-
-Add Traefik labels to your `compose.yml`:
+## Add a Docker Service
 
 ```yaml
 services:
   myapp:
-    image: myapp:latest
-    networks:
-      - traefik_proxy
+    image: myapp:1.2.3
+    networks: [traefik_proxy]
     labels:
       - traefik.enable=true
       - traefik.http.routers.myapp.rule=Host(`myapp.rsdn.io`)
       - traefik.http.routers.myapp.entrypoints=websecure
-      - traefik.http.routers.myapp.tls.certresolver=cloudflare
       - traefik.http.services.myapp.loadbalancer.server.port=8080
+      # optional: admin-only behind Authentik
+      # - traefik.http.routers.myapp.middlewares=authentik@docker
+      - flame.type=application
+      - flame.name=My App
+      - flame.url=https://myapp.rsdn.io
 
 networks:
   traefik_proxy:
     external: true
 ```
 
-**Required labels:**
-- `traefik.enable=true` - Expose to Traefik
-- `traefik.http.routers.<name>.rule` - Host matching rule
-- `traefik.http.routers.<name>.entrypoints=websecure` - HTTPS only
-- `traefik.http.routers.<name>.tls.certresolver=cloudflare` - SSL cert
-- `traefik.http.services.<name>.loadbalancer.server.port` - Container port
+The entrypoints already set TLS and the cert resolver, so routers don't need `tls.certresolver`. Then add a DNS CNAME `myapp.rsdn.io → rprx.rsdn.io` in Technitium on the NAS.
 
-### Add a Non-Docker Service
+**To make it public**, use `entrypoints=websecure,websecure-public`, add a rate limit or an allowlist, and create the public DNS record in Cloudflare. Think twice: the app's own login is then the only thing between it and the internet.
 
-Edit `config/traefik/dynamic.yml`:
+## Add a Non-Docker Backend
+
+Edit `config/traefik/dynamic.yml` in the core repo and merge. The `config/traefik/` directory is mounted (not the single file), so the file provider picks up the change after the deploy's `git reset` with no restart.
 
 ```yaml
 http:
   routers:
     myservice:
       rule: "Host(`myservice.rsdn.io`)"
-      entryPoints:
-        - websecure
+      entryPoints: [websecure]
       service: myservice
-      tls:
-        certResolver: cloudflare
-
   services:
     myservice:
       loadBalancer:
         servers:
-          - url: "http://192.168.1.100:8080"
+          - url: "http://192.168.1.95:8080"
 ```
 
-Traefik watches this file and applies changes automatically.
+Use `serversTransport: insecure` for backends with self-signed certs (Proxmox, DSM, UniFi, the GitLab VM).
 
-### Add Basic Auth to a Service
+Current file-provider routes: Open WebUI and Hermes on the Studio, GitLab VM, Home Assistant, both Proxmox UIs, DSM, UniFi, both Technitium UIs, Pi-hole.
 
-```yaml
-labels:
-  # ... existing labels ...
-  - traefik.http.routers.myapp.middlewares=myapp-auth
-  - traefik.http.middlewares.myapp-auth.basicauth.users=${MYAPP_AUTH}
-```
+!!! note "Studio backends are pf-filtered"
+    Open WebUI (:8080) and Hermes (:9119) only accept connections from ctr01 and loopback. If ctr01's IP changes, update `TRAEFIK_IP` in mac-config's `setup.sh` and re-run it.
 
-Generate the auth string:
-```bash
-# Install htpasswd (apache2-utils)
-htpasswd -nb username password
-# Output: username:$apr1$...
+## Authentication
 
-# Add to .env
-MYAPP_AUTH=username:$$apr1$$...  # Double $$ for Docker Compose
-```
+`authentik@docker` is the forward-auth middleware from the [authentik](authentik.md) stack. Each protected app also needs a proxy provider and application in an Authentik blueprint. If Authentik is down, protected routers fail, so keep it to admin UIs.
 
-### Add Rate Limiting
+The dashboard used to rely on a `lan-only` IP allowlist; that can't tell a tailnet client from a LAN client, because tailnet traffic arrives through the subnet router SNATed to a 192.168.1.x address.
 
-```yaml
-labels:
-  - traefik.http.routers.myapp.middlewares=myapp-ratelimit
-  - traefik.http.middlewares.myapp-ratelimit.ratelimit.average=100
-  - traefik.http.middlewares.myapp-ratelimit.ratelimit.burst=50
-```
-
-### Check Route Configuration
+## Certificates
 
 ```bash
-# View all routers
-ssh ctr01 'curl -s http://localhost:8080/api/http/routers | jq .'
-
-# Check specific router
-ssh ctr01 'curl -s http://localhost:8080/api/http/routers | jq ".[] | select(.name | contains(\"myapp\"))"'
+ssh ctr01 'sudo jq -r ".cloudflare.Certificates[].domain" /mnt/synology/docker/core/traefik/acme.json'
+docker logs traefik 2>&1 | grep -i acme
 ```
 
----
+`acme.json` must stay mode 600. The Cloudflare token is `CLOUDFLARE_DNS_API_TOKEN` in the core stack's `.env`.
 
-## SSL Certificates
+## Logs and Metrics
 
-### How It Works
-
-Traefik uses Let's Encrypt with Cloudflare DNS challenge:
-
-1. New service with `tls.certresolver=cloudflare` triggers cert request
-2. Traefik creates DNS TXT record via Cloudflare API
-3. Let's Encrypt validates and issues wildcard cert
-4. Cert stored in `/acme.json`
-
-### Certificate Storage
-
-| Path | Description |
-|------|-------------|
-| `/mnt/synology/docker/core/traefik/acme.json` | Certificate storage (600 permissions) |
-
-### Force Certificate Renewal
-
-```bash
-# Backup current certs
-ssh ctr01 'cp /mnt/synology/docker/core/traefik/acme.json /mnt/synology/docker/core/traefik/acme.json.bak'
-
-# Remove specific cert (Traefik will re-request)
-# Or restart Traefik to trigger renewal check
-ssh ctr01 'cd /opt/stacks/core && docker compose restart traefik'
-```
-
-### View Current Certificates
-
-```bash
-# Check acme.json (requires jq)
-ssh ctr01 'cat /mnt/synology/docker/core/traefik/acme.json | jq ".cloudflare.Certificates[].domain"'
-```
-
----
-
-## Configuration
-
-### Static Configuration
-
-`config/traefik/traefik.yml` - Loaded at startup:
-
-```yaml
-log:
-  level: INFO
-  format: json
-
-api:
-  dashboard: true
-
-entryPoints:
-  web:
-    address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure  # Auto-redirect HTTP → HTTPS
-
-  websecure:
-    address: ":443"
-
-providers:
-  docker:
-    exposedByDefault: false
-    network: traefik_proxy
-  file:
-    filename: /etc/traefik/dynamic.yml
-    watch: true
-
-certificatesResolvers:
-  cloudflare:
-    acme:
-      dnsChallenge:
-        provider: cloudflare
-      email: "john@stetter.io"
-      storage: /acme.json
-```
-
-### Dynamic Configuration
-
-`config/traefik/dynamic.yml` - Hot-reloaded for non-Docker services.
-
-### Environment Variables
-
-| Variable | Purpose |
-|----------|---------|
-| `CLOUDFLARE_DNS_API_TOKEN` | Cloudflare API for DNS challenge |
-| `DOMAIN` | Base domain (rsdn.io) |
-
----
-
-## Logs
-
-### Access Logs
-
-```bash
-# View recent access logs
-ssh ctr01 'tail -100 /mnt/synology/docker/core/traefik/logs/access.log | jq .'
-
-# Filter by service
-ssh ctr01 'cat /mnt/synology/docker/core/traefik/logs/access.log | jq "select(.ServiceName | contains(\"grafana\"))"'
-```
-
-### Application Logs
-
-```bash
-# Traefik container logs
-ssh ctr01 'docker logs traefik --tail 100'
-
-# Follow logs
-ssh ctr01 'docker logs traefik -f'
-```
-
----
+- Access log (JSON) and Traefik log: `/mnt/synology/docker/core/traefik/logs/`, also `docker logs traefik`.
+- Prometheus scrapes `traefik:8080` over `monitoring_external`, with entrypoint, router and service labels.
+- Tracing to Jaeger was removed in October 2026.
 
 ## Troubleshooting
 
-### Service Returns 404
-
-1. **Check router exists:** Visit dashboard, look for your router
-2. **Verify Host rule:** Ensure domain matches exactly
-3. **Check network:** Service must be on `traefik_proxy` network
-4. **DNS configured?** Verify CNAME points to `rprx.rsdn.io`
-
-### Service Returns 502
-
-Backend is unreachable:
-
-1. **Container running?** `docker ps | grep myapp`
-2. **Correct port?** Check `loadbalancer.server.port` matches exposed port
-3. **Health check?** Container might be starting
-4. **Check logs:** `docker logs myapp`
-
-### Certificate Errors
-
-1. **Check Cloudflare token:** Verify `CLOUDFLARE_DNS_API_TOKEN` is valid
-2. **Check acme.json permissions:** Must be 600
-3. **Rate limited?** Let's Encrypt has rate limits; wait and retry
-4. **View Traefik logs:** `docker logs traefik | grep -i acme`
-
-### Dashboard Not Loading
-
-```bash
-# Check Traefik is running
-docker ps | grep traefik
-
-# Check ports
-ss -tlnp | grep -E "80|443"
-
-# Check container logs
-docker logs traefik --tail 50
-```
-
----
-
-## Metrics
-
-Traefik exports Prometheus metrics at `:8080/metrics`:
-
-- `traefik_entrypoint_requests_total`
-- `traefik_router_requests_total`
-- `traefik_service_requests_total`
-
-View in Grafana: [grafana.rsdn.io](https://grafana.rsdn.io) → Traefik dashboard
-
----
-
-## Related
-
-- [Core Stack](../stacks/ctr01.md#core)
-- [Adding New Stacks](../runbooks/new-stack.md)
-- [Traefik Official Docs](https://doc.traefik.io/traefik/)
-- [Grafana](grafana.md) - Traefik metrics dashboard
+| Symptom | Check |
+|---------|-------|
+| 404 | Router exists on the dashboard? Host rule exact? Container on `traefik_proxy`? |
+| 502 / 504 | Backend up? Right `loadbalancer.server.port`? For Studio backends, is the daemon up and the pf anchor allowing ctr01? |
+| Works on LAN, not internet | Router not on `websecure-public` (intended for almost everything) |
+| Dashboard errors | Authentik down: `docker ps | grep authentik` |
+| `dynamic.yml` change ignored | YAML error: `docker logs traefik | grep -i error` |
+| Static config change ignored | `traefik.yml` changes need `docker compose restart traefik` |

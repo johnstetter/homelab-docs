@@ -9,7 +9,7 @@ Sonarr is a TV show management and automation tool that monitors for new episode
 | **URL** | [sonarr.rsdn.io](https://sonarr.rsdn.io) |
 | **Stack** | [compose-stacks/media](https://gitlab.com/stetter-homelab/compose-stacks/media) |
 | **Port** | 8989 |
-| **Image** | `linuxserver/sonarr:latest` |
+| **Image** | `lscr.io/linuxserver/sonarr:latest` |
 
 ## Authentication
 

@@ -8,7 +8,7 @@ Media streaming server with GPU-accelerated transcoding.
 |----------|-------|
 | **URL** | [plex.rsdn.io](https://plex.rsdn.io) |
 | **Direct** | [plex.rsdn.io:32400/web](https://plex.rsdn.io:32400/web) |
-| **Stack** | [compose-stacks/media-servers](https://gitlab.com/stetter-homelab/compose-stacks/media-servers) |
+| **Stack** | [compose-stacks/mediaservers](https://gitlab.com/stetter-homelab/compose-stacks/mediaservers) |
 | **Port** | 32400 |
 | **Image** | `plexinc/pms-docker:latest` |
 | **GPU** | NVIDIA RTX2000E ADA (NVENC/NVDEC) |
@@ -266,12 +266,12 @@ docker compose start plex
 | [Sonarr](https://sonarr.rsdn.io) | TV show automation |
 | [Radarr](https://radarr.rsdn.io) | Movie automation |
 | [Tautulli](https://tautulli.rsdn.io) | Plex statistics |
-| [Jellyfin](https://jellyfin.rsdn.io) | Open-source alternative |
+| [Jellyfin](https://jf.rsdn.io) | Open-source alternative |
 
 ---
 
 ## Related
 
-- [Media Servers Stack](../stacks/ctr01.md#media-servers)
+- [Media Servers Stack](../stacks/ctr01.md#mediaservers)
 - [Plex Support](https://support.plex.tv/)
 - [Tautulli](https://tautulli.com/)

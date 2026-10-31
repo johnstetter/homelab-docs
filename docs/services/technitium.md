@@ -6,12 +6,12 @@ Technitium DNS Server for authoritative DNS and local resolution across the home
 
 | Property | Value |
 |----------|-------|
-| **Primary URL** | [dns.rsdn.io](https://dns.rsdn.io) |
-| **Secondary URL** | [dns-ctr01.rsdn.io](https://dns-ctr01.rsdn.io) |
-| **Primary Stack** | [syn-stacks/technitium](https://gitlab.com/stetter-homelab/syn-stacks) (Synology) |
+| **Primary URL** | [technitium-syn.rsdn.io](https://technitium-syn.rsdn.io) |
+| **Secondary URL** | [technitium-ctr.rsdn.io](https://technitium-ctr.rsdn.io) |
+| **Primary Stack** | `/volume1/docker/stacks/technitium` (Synology Container Manager) |
 | **Secondary Stack** | [compose-stacks/technitium](https://gitlab.com/stetter-homelab/compose-stacks/technitium) (ctr01) |
 | **Port** | 5380 (Web UI), 53 (DNS) |
-| **Image** | `technitium/dns-server` |
+| **Image** | `technitium/dns-server:15.6.2` |
 
 ## Architecture
 

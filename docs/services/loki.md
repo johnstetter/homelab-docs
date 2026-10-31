@@ -9,7 +9,7 @@ Log aggregation system for collecting and querying container and system logs.
 | **URL** | Internal only (query via Grafana) |
 | **Stack** | [compose-stacks/monitoring](https://gitlab.com/stetter-homelab/compose-stacks/monitoring) |
 | **Port** | 3100 |
-| **Image** | `grafana/loki:3.6.3` |
+| **Image** | `grafana/loki:3.7.9` |
 
 Loki is not exposed externally. Query logs through [Grafana Explore](https://grafana.rsdn.io/explore).
 

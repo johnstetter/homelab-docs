@@ -9,7 +9,7 @@ Metrics collection and alerting for homelab infrastructure.
 | **URL** | [prometheus.rsdn.io](https://prometheus.rsdn.io) |
 | **Stack** | [compose-stacks/monitoring](https://gitlab.com/stetter-homelab/compose-stacks/monitoring) |
 | **Port** | 9090 |
-| **Image** | `prom/prometheus:v3.8.1` |
+| **Image** | `prom/prometheus:v3.15.1` |
 
 ## Authentication
 
