@@ -82,14 +82,14 @@ All configuration is stored in Git for version control and disaster recovery.
 | **monitoring** | `/mnt/synology/docker/monitoring/` | Hyper Backup |
 | **management** | `/mnt/synology/docker/management/` | Hyper Backup |
 | **automation** | `/mnt/synology/docker/automation/` | Hyper Backup |
-| **media-servers** | `/mnt/synology/docker/media-servers/` | Hyper Backup |
+| **mediaservers** | Local Docker volumes | Backrest |
 | **media** | `/mnt/synology/docker/media/` | Hyper Backup |
 | **ai** | `/mnt/synology/docker/ai/` | Hyper Backup |
 | **frigate** | `/mnt/synology/docker/frigate/` | Hyper Backup |
-| **dev-tools** | `/mnt/synology/docker/dev-tools/` | Hyper Backup |
-| **gitlab** | `/mnt/synology/docker/gitlab/` | Hyper Backup |
+| **devtools** | `/mnt/synology/docker/dev-tools/` (path kept from the old stack name) | Hyper Backup |
+| **GitLab** | GitLab VM on the Synology (192.168.1.156) | Synology |
 | **technitium** | `/mnt/synology/docker/technitium/` | Hyper Backup |
-| **mcp** | `/mnt/synology/docker/mcp/` | Hyper Backup |
+| **authentik, silo, tracearr, dispatcharr** | Local Docker volumes (databases dumped by db-dumper at 01:30) | Backrest |
 | **Docker volumes** | `/var/lib/docker/volumes/` | Backrest |
 
 ---
@@ -444,7 +444,7 @@ If ctr01 needs to be rebuilt completely:
 
 4. **Clone all stack repositories:**
    ```bash
-   for stack in core monitoring management automation media-servers media ai frigate dev-tools gitlab technitium mcp; do
+   for stack in core authentik monitoring management automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror stetter-io frigate standards; do
      git clone git@gitlab.com:stetter-homelab/compose-stacks/$stack.git /opt/stacks/$stack
    done
    ```
@@ -510,7 +510,7 @@ Quarterly, perform a test restore to verify backups are actually recoverable:
 
 2. **Stop the service:**
    ```bash
-   ssh ctr01 'cd /opt/stacks/dev-tools && docker compose stop it-tools'
+   ssh ctr01 'cd /opt/stacks/devtools && docker compose stop it-tools'
    ```
 
 3. **Rename current data:**

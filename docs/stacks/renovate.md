@@ -8,7 +8,7 @@ Renovate is used to automatically keep Docker image versions up-to-date across a
 sequenceDiagram
     participant R as Renovate Bot
     participant GL as GitLab
-    participant Repo as compose-stacks/syn-stacks
+    participant Repo as compose-stacks/<stack>
     participant CI as GitLab CI
 
     R->>Repo: Scan docker-compose.yml files
@@ -26,8 +26,8 @@ sequenceDiagram
 1. **Scheduled Scans** - Renovate runs on a schedule (typically daily) to check for updates
 2. **MR Creation** - When a new version is found, Renovate creates a merge request
 3. **CI Validation** - GitLab CI runs linting and validation on the MR
-4. **Review & Merge** - You review and merge when ready
-5. **Deployment** - Merged changes trigger stack deployment via CI/CD or manual pull
+4. **Merge** - Minor and patch Docker updates **auto-merge** once the pipeline passes in most stacks; majors wait for review
+5. **Deployment** - The merge to `main` triggers the stack's deploy job on ctr01
 
 ## Configuration
 
@@ -80,8 +80,7 @@ Renovate creates a **Dependency Dashboard** issue in each repository. This issue
 
 | Repository | Dashboard |
 |------------|-----------|
-| compose-stacks | [GitLab Issues](https://gitlab.com/stetter-homelab/compose-stacks/-/issues?label_name=renovate) |
-| syn-stacks | [GitLab Issues](https://gitlab.com/stetter-homelab/syn-stacks/-/issues?label_name=renovate) |
+| Each stack repo | Its own "Dependency Dashboard" issue, e.g. [core](https://gitlab.com/stetter-homelab/compose-stacks/core/-/issues/?label_name%5B%5D=renovate) |
 
 ### Dashboard Features
 
@@ -146,27 +145,16 @@ Security updates should be prioritized:
 
 ## Repository Coverage
 
-### compose-stacks
+Checked on 2026-10-30 from each stack's `renovate.json`:
 
-All stacks in `compose-stacks/` are monitored:
+| Stack | Config | Minor/patch auto-merge |
+|-------|--------|------------------------|
+| ai, automation, core, devtools, frigate, gitlab, management, media, mediaservers, silo, technitium | `config:recommended` + automerge rule | Yes |
+| monitoring | `config:recommended` + dcgm-exporter versioning rule | No |
+| gitlab-mirror | `config:recommended` | No |
+| authentik, dispatcharr, tracearr, stetter-io | No `renovate.json` | - |
 
-| Stack | Images Tracked |
-|-------|----------------|
-| core | traefik, vault |
-| monitoring | prometheus, grafana, loki, jaeger |
-| media | plex, sonarr, radarr, lidarr |
-| ai | ollama, open-webui, n8n |
-| frigate | frigate, mosquitto |
-| ... | ... |
-
-### syn-stacks
-
-Core infrastructure on Synology:
-
-| Stack | Images Tracked |
-|-------|----------------|
-| technitium | technitium/dns-server |
-| node-exporter | prom/node-exporter |
+Images are pinned by tag and digest in `compose.yml`, and Renovate updates both. The Synology's compose files (`/volume1/docker/stacks/`) aren't in a repo Renovate watches.
 
 ## Best Practices
 

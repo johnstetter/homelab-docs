@@ -36,7 +36,7 @@ graph LR
 ```
 
 - Pipelines come from the shared, tag-pinned `stetter-homelab/ci-templates`.
-- **Renovate** opens MRs for image updates; images are pinned by tag and digest.
+- **Renovate** opens MRs for image updates (images are pinned by tag and digest); minor and patch updates auto-merge in most stacks once CI passes. See [Renovate](renovate.md).
 - A stack with every service disabled (profile `disabled` or `deploy.replicas: 0`) uses the manual deploy job, because `compose up` exits with "no service selected" otherwise.
 - `/opt/stacks/CLAUDE.md` is a symlink to `standards/CLAUDE-GLOBAL.md`, so every Claude Code session on ctr01 loads the shared rules. See [standards](#standards).
 - Day-to-day work happens on ctr01 itself (VS Code Remote-SSH); ctr01 is also the dev workspace.
