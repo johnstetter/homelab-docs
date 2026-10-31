@@ -78,7 +78,7 @@ Welcome to the central documentation hub for the Stetter Homelab infrastructure.
 
 | Repository | Purpose |
 |------------|---------|
-| [homelab-docs](https://gitlab.com/stetter-homelab/homelab-docs) | This site |
+| [homelab-docs](https://github.com/johnstetter/homelab-docs) | This site (GitHub) |
 | [vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | OpenTofu + Ansible for Proxmox guests and hosts |
 | [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | One repo per Docker Compose stack on ctr01 |
 | [ci-templates](https://gitlab.com/stetter-homelab/ci-templates) | Shared GitLab CI templates |
@@ -97,11 +97,11 @@ New to the homelab? Start here:
 
 ## Contributing
 
-All documentation lives in [stetter-homelab/homelab-docs](https://gitlab.com/stetter-homelab/homelab-docs) on GitLab; `main` is mirrored to GitHub, which publishes this site. To make changes:
+All documentation lives in [johnstetter/homelab-docs](https://github.com/johnstetter/homelab-docs) on GitHub, whose Actions workflow publishes this site to GitHub Pages. To make changes:
 
 1. Clone the repository
 2. Create a feature branch
 3. Make your changes
-4. Submit a merge request
+4. Open a pull request
 
 See the [Runbooks](runbooks/index.md) section for operational procedures and standards.

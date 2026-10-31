@@ -122,15 +122,14 @@ See [Traefik](../services/traefik.md) for labels and operations.
 
 | Node | Role |
 |------|------|
-| `ctr01-ts` | Host `tailscaled`, `tag:docker-host`, advertises `192.168.1.0/24` |
-| `nexus-ts` | Intended primary subnet router |
+| `ctr01-ts` | Host `tailscaled`, `tag:docker-host`, subnet router for `192.168.1.0/24` |
+| `nexus-ts` | Subnet router for `192.168.1.0/24` |
 | `studio-ts`, `air-ts`, `bluefin-tc1-ts`, `iphone`, `homeassistant` | Clients |
 | `droplet-ts` | Cloud VM |
 
 Remote clients reach every `*.rsdn.io` name through split DNS and the subnet route, landing on `websecure` like a LAN client. ctr01 runs `--accept-dns=false --accept-routes=false` so it never routes the LAN back through the tailnet.
 
-!!! warning "Drift found 2026-10-30"
-    compose-stacks/core says nexus is the primary subnet router with ctr01 as standby, but right now only `ctr01-ts` advertises `192.168.1.0/24`; nexus advertises no routes.
+Both ctr01 and nexus advertise `192.168.1.0/24`; Tailscale uses one at a time and fails over to the other. On 2026-10-30 ctr01 was the active one (`tailscale status --json` lists it under `PrimaryRoutes`).
 
 ## Inbound Firewall (UDM Pro)
 

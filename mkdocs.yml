@@ -3,8 +3,8 @@ site_description: Central documentation hub for stetter-homelab infrastructure
 site_author: John Stetter
 site_url: https://johnstetter.github.io/homelab-docs/
 
-repo_name: stetter-homelab/homelab-docs
-repo_url: https://gitlab.com/stetter-homelab/homelab-docs
+repo_name: johnstetter/homelab-docs
+repo_url: https://github.com/johnstetter/homelab-docs
 
 theme:
   name: material
@@ -28,7 +28,7 @@ theme:
     - content.code.annotate
     - toc.follow
   icon:
-    repo: fontawesome/brands/gitlab
+    repo: fontawesome/brands/github
 
 plugins:
   - search

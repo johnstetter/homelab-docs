@@ -9,7 +9,7 @@ Everything is defined in Git and applied by CI or by one idempotent script per l
 | CI templates | [ci-templates](https://gitlab.com/stetter-homelab/ci-templates) | GitLab CI | All stack repos |
 | Macs | [mac-config](https://gitlab.com/stetter-homelab/mac-config) | Homebrew, GNU Stow, devbox, LaunchDaemons | Mac Studio, MacBook Air |
 | Home Assistant | [home-assistant-config](https://gitlab.com/stetter-homelab/home-assistant-config) | HA YAML, CI | Home Assistant |
-| Docs | [homelab-docs](https://gitlab.com/stetter-homelab/homelab-docs) | MkDocs Material | This site |
+| Docs | [homelab-docs](https://github.com/johnstetter/homelab-docs) (GitHub) | MkDocs Material | This site |
 
 Archived: k8s-platform, talos-platform, talos-terraform-poc (their host, core.rsdn.io, is offline).
 
