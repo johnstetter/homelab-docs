@@ -48,7 +48,7 @@ Storage network: nexus 10.0.10.1, syn 10.0.10.4, ctr01 10.0.10.20, sec01 10.0.10
 |--------|------|------|
 | Technitium | syn, 192.168.1.4 | Primary; authoritative for `rsdn.io`, ad blocking |
 | Technitium | ctr01, 192.168.1.20 | Secondary |
-| Pi-hole | syn | Still running alongside (UI at `pihole.rsdn.io`) |
+| Pi-hole | syn | Legacy, set not to restart but still running (UI at `pihole.rsdn.io`) |
 
 - Every web service is a CNAME to **`rprx.rsdn.io`** (ctr01, where Traefik listens), including the ones that actually live on the Studio, the GitLab VM or the Proxmox hosts. Traefik forwards those.
 - Hosts themselves have A records (`studio`, `nexus`, `ha`, ...).

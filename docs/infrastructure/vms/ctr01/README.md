@@ -17,34 +17,12 @@ High-performance Docker host with GPU acceleration for AI/ML workloads and conta
 
 ### Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                   ctr01 VM                                         │
-│  ┌─────────────────────────┐      ┌─────────────────────────────────────────────┐  │
-│  │     Core Services       │      │         AI/GPU Workloads                   │  │
-│  │  - Traefik (Proxy)     │      │  - Ollama (LLM Server)                    │  │
-│  │  - Vault (Secrets)     │      │  - Whisper (Speech-to-Text)               │  │
-│  │  - Prometheus/Grafana  │      │  - Frigate NVR (Object Detection)         │  │
-│  │  - GitLab CE           │      │  - Plex (Hardware Transcoding)            │  │
-│  └─────────────────────────┘      └─────────────────────────────────────────────┘  │
-│             │                                      │                              │
-│             ▼                                      ▼                              │
-│  ┌─────────────────────────┐      ┌─────────────────────────────────────────────┐  │
-│  │    Media & Content      │      │         NVIDIA RTX2000E ADA                │  │
-│  │  - Plex Media Server   │      │  - 16GB VRAM                               │  │
-│  │  - Sonarr/Radarr       │      │  - NVENC/NVDEC (Video)                    │  │
-│  │  - SABnzbd             │      │  - CUDA/TensorRT (AI)                     │  │
-│  │  - Jellyfin/Emby       │      │  - Hardware Acceleration                   │  │
-│  └─────────────────────────┘      └─────────────────────────────────────────────┘  │
-│             │                                      │                              │
-│             ▼                                      ▼                              │
-│  ┌─────────────────────────────────────────────────────────────────────────────┐  │
-│  │                        Storage & Networking                                 │  │
-│  │  Management: 192.168.1.20 (1G) ◄──────────► Storage: 10.0.10.20 (10G)    │  │
-│  │  Local SSD: 100GB (OS/Containers) ◄────────► NFS: Synology (Media/Data)   │  │
-│  └─────────────────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────────────┘
-```
+- **Platform:** Traefik, Vault, Authentik, Technitium (secondary), monitoring, management
+- **GPU workloads (RTX 2000E Ada):** Ollama for Home Assistant voice, Plex/Jellyfin/Emby NVENC, Tdarr, Tunarr, Dispatcharr, ARM. Frigate is disabled.
+- **Media:** the *arr stack behind gluetun, Silo, Tracearr
+- **Storage:** local Docker volumes on a 411 GB LV, bulk data on NFS over the 10GbE storage network
+
+See [ctr01 Stacks](../../../stacks/ctr01.md) for the full list.
 
 ## Specifications
 
@@ -52,14 +30,12 @@ High-performance Docker host with GPU acceleration for AI/ML workloads and conta
 |-----------|--------------|
 | **OS** | Debian 13 (Trixie) |
 | **vCPUs** | 10 cores |
-| **RAM** | 24 GB |
-| **Disk** | 100 GB (local SSD) |
+| **RAM** | 32 GB |
+| **Disk** | 600 GB on ZFS `vm-storage` (Docker on a 411 GB LV) |
 | **GPU** | NVIDIA RTX2000E ADA 16GB (passthrough) |
 | **Network** | Dual NIC (management + 10G storage) |
-| **Hypervisor** | Proxmox VE on pve-ms-a2 |
+| **Hypervisor** | Proxmox VE 9.2 on nexus (VM 100) |
 
-!!! note "Specification Sources"
-    Current specifications reflect actual VM allocation. Some documentation files show different values due to past changes or planning documents.
 
 ### Network Configuration
 
@@ -166,28 +142,14 @@ docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi
 
 ### Stack Organization
 
-**Stack Structure** (`/opt/stacks/`):
-```
-/opt/stacks/
-├── core/               # Traefik, Vault
-├── monitoring/         # Prometheus, Grafana, Loki
-├── management/         # Portainer, Dozzle, Semaphore
-├── media-servers/      # Plex, Jellyfin, Emby
-├── media/             # Sonarr, Radarr, SABnzbd
-├── ai/                # Ollama, OpenWebUI, n8n
-├── frigate/           # Frigate NVR, MQTT
-├── dev-tools/         # code-server, Flame, IT-Tools
-├── gitlab/            # GitLab CE
-└── automation/        # Watchtower, scripts
-```
+**Stack Structure** (`/opt/stacks/`): one checkout per stack repo: `ai`, `authentik`, `automation`, `core`, `devtools`, `dispatcharr`, `frigate` (disabled), `gitlab` (disabled), `gitlab-mirror`, `management`, `media`, `mediaservers`, `monitoring`, `silo`, `standards`, `stetter-io`, `technitium`, `tracearr`. `/opt/stacks/CLAUDE.md` links to `standards/CLAUDE-GLOBAL.md`.
 
 ### Network Architecture
 
 **Docker Networks:**
-- **traefik_default**: Main reverse proxy network
-- **monitoring_default**: Isolated monitoring stack
-- **media_default**: Media services with VPN integration
-- **ai_default**: AI/ML services with GPU access
+- **traefik_proxy** (external): ingress for every web UI
+- **monitoring_external** (external): lets Prometheus reach exporters in other stacks
+- **<stack>_default**: per-stack internal networks
 
 **Service Discovery:**
 - **Traefik labels** for automatic routing
@@ -199,7 +161,7 @@ docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi
 ### NVIDIA Driver Configuration
 
 **Driver Stack:**
-- **NVIDIA Driver**: Latest production driver (535+)
+- **NVIDIA Driver**: 550 series (550.163.01 on 2026-10-30)
 - **CUDA Runtime**: 12.0+ for container compatibility
 - **Docker NVIDIA Runtime**: nvidia-docker2 integration
 - **Container Toolkit**: NVIDIA Container Toolkit
@@ -221,14 +183,13 @@ docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi
 ### GPU-Accelerated Services
 
 #### AI/ML Services
-- **Ollama**: Local LLM inference with CUDA acceleration
-- **Whisper**: Speech-to-text transcription
-- **Frigate**: Real-time object detection using TensorRT
+- **Ollama**: `gpt-oss-ha:20b` for Home Assistant voice, ~12.4 of 16 GB VRAM, kept loaded
+- **Frigate**: TensorRT object detection (disabled since 2026-10-28 to free VRAM)
 
 #### Media Services
 - **Plex**: Hardware video transcoding (NVENC/NVDEC)
-- **Jellyfin**: GPU-accelerated video processing
-- **Tautulli**: Transcoding monitoring and statistics
+- **Jellyfin / Emby**: NVENC transcoding
+- **Tdarr, Tunarr, Dispatcharr, ARM**: GPU transcoding and ripping
 
 ### GPU Resource Management
 
@@ -260,7 +221,7 @@ services:
 
 ## Storage Configuration
 
-### Local Storage (100GB SSD)
+### Local Storage
 
 **Storage Allocation:**
 - **OS & System**: ~15GB (Debian base system)
@@ -420,7 +381,7 @@ nvidia-smi --query-compute-apps=pid,used_memory --format=csv
 - **Official images** preferred
 - **Vulnerability scanning** via Docker Scout
 - **Pinned image versions** for stability
-- **Regular image updates** via Watchtower
+- **Regular image updates** via Renovate MRs (digest-pinned)
 
 ### Network Security
 
