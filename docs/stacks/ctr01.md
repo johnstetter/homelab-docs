@@ -1,570 +1,169 @@
 # ctr01 Stacks
 
-All Docker Compose stacks running on ctr01 (192.168.1.20), the primary Docker host.
+Every Docker Compose stack on ctr01, as deployed on 2026-10-30. Each stack is its own repo under [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks), checked out at `/opt/stacks/<stack>`.
 
-**Repository:** [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) (e.g., `compose-stacks/core`, `compose-stacks/monitoring`)
+| Stack | Services | Hostnames |
+|-------|----------|-----------|
+| [core](#core) | traefik, vault, zork-root | traefik, vault, `rsdn.io` + file-provider routes |
+| [authentik](#authentik) | authentik, worker, postgres, redis | sso |
+| [monitoring](#monitoring) | prometheus, alertmanager, grafana, loki, promtail, vector, cadvisor, dcgm-exporter, pve-exporter, snmp-exporter, unpoller, docker-size-collector | grafana, prometheus, alertmanager, promtail |
+| [management](#management) | portainer, portainer-agent, dozzle, semaphore (+mysql), pulse, backrest, db-dumper | portainer, dozzle, semaphore, pulse, backrest |
+| [automation](#automation) | watchtower, gitlab-sync (gickup) | - |
+| [ai](#ai) | ollama, ollama-metrics, searxng, gluetun-searxng | search |
+| [media](#media) | gluetun, sonarr, radarr, lidarr, bazarr, prowlarr, sabnzbd, nzbget, seerr, tdarr, tunarr, arm | sonarr, radarr, lidarr, bazarr, prowlarr, sabnzbd, nzbget, requests, tdarr, tunarr, arm |
+| [mediaservers](#mediaservers) | plex, jellyfin, emby, tautulli, uhf-server | plex, jf, emby, tautulli |
+| [silo](#silo) | silo, postgres (pgvector), redis | silo, silo-jf |
+| [tracearr](#tracearr) | tracearr, timescaledb, redis | tracearr |
+| [dispatcharr](#dispatcharr) | dispatcharr, postgres | dispatcharr |
+| [devtools](#devtools) | code-server, flame, it-tools, privatebin, gitlab-runner | code, flame, it-tools, privatebin |
+| [gitlab-mirror](#gitlab-mirror) | gitlab-mirror | - |
+| [technitium](#technitium-ctr01) | technitium | technitium-ctr (via core) |
+| [stetter-io](#stetter-io) | web | stetter.io, www.stetter.io (public) |
+| [frigate](#frigate) | frigate, postgres, redis | frigate (**disabled**) |
+| [gitlab](#gitlab) | gitlab | **disabled**, moved to a VM |
+| [standards](#standards) | - | Shared CLAUDE.md standards, not a running stack |
 
-## Stack Overview
+Hostnames are under `rsdn.io` unless shown otherwise.
 
-| Stack | Services | Status |
-|-------|----------|--------|
-| [core](#core) | Traefik, Vault | Active |
-| [monitoring](#monitoring) | Prometheus, Grafana, Loki, Jaeger | Active |
-| [management](#management) | Portainer, Dozzle, Semaphore | Active |
-| [automation](#automation) | Watchtower | Active |
-| [media-servers](#media-servers) | Plex, Jellyfin, Emby, Tautulli | Active |
-| [media](#media) | Sonarr, Radarr, Lidarr, Bazarr, SABnzbd | Active |
-| [ai](#ai) | Ollama, Open-WebUI, n8n, Whisper | Active |
-| [frigate](#frigate) | Frigate, MQTT | Active |
-| [dev-tools](#dev-tools) | code-server, Flame, IT-Tools | Active |
-| [gitlab](#gitlab) | GitLab CE | Active |
-| [technitium](#technitium-ctr01) | Technitium DNS | Active (Secondary/Backup) |
-| [mcp](#mcp) | MCP Servers | Active |
+## How Stacks Are Deployed
 
----
-
-## Core
-
-Essential infrastructure services that all other stacks depend on.
-
-### Traefik
-
-Reverse proxy and SSL termination for all services.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `traefik:v3.0` |
-| **Ports** | 80, 443 |
-| **Dashboard** | [traefik.rsdn.io](https://traefik.rsdn.io) |
-
-**Features:**
-
-- Let's Encrypt wildcard certificates via Cloudflare DNS
-- Automatic HTTPS redirect
-- Docker provider for auto-discovery
-- Middleware for authentication, rate limiting
-
-**Configuration:**
-
-```yaml
-services:
-  traefik:
-    image: traefik:v3.0
-    command:
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./acme.json:/acme.json
-    environment:
-      - CF_API_EMAIL=${CLOUDFLARE_EMAIL}
-      - CF_API_KEY=${CLOUDFLARE_API_KEY}
+```mermaid
+graph LR
+    MR[Merge to main] --> SEC[security<br/>Trivy, Gitleaks]
+    SEC --> VAL[validate<br/>docker compose config]
+    VAL --> DEP[deploy<br/>SSH to ctr01]
+    DEP --> UP[git reset to origin/main<br/>compose pull<br/>compose up -d --remove-orphans<br/>fail on unhealthy]
 ```
 
-### Vault
+- Pipelines come from the shared, tag-pinned `stetter-homelab/ci-templates`.
+- **Renovate** opens MRs for image updates; images are pinned by tag and digest.
+- A stack with every service disabled (profile `disabled` or `deploy.replicas: 0`) uses the manual deploy job, because `compose up` exits with "no service selected" otherwise.
+- `/opt/stacks/CLAUDE.md` is a symlink to `standards/CLAUDE-GLOBAL.md`, so every Claude Code session on ctr01 loads the shared rules. See [standards](#standards).
+- Day-to-day work happens on ctr01 itself (VS Code Remote-SSH); ctr01 is also the dev workspace.
 
-HashiCorp Vault for secrets management.
+Shared Docker networks: `traefik_proxy` (ingress) and `monitoring_external` (scrape targets).
 
-| Property | Value |
-|----------|-------|
-| **Image** | `hashicorp/vault:1.15` |
-| **Port** | 8200 |
-| **URL** | [vault.rsdn.io](https://vault.rsdn.io) |
+## core
 
-**Use Cases:**
+Traefik v3.7 and Vault 2.2. See [Traefik](../services/traefik.md) and [Vault](../services/vault.md).
 
-- API keys and credentials
-- Docker registry secrets
-- Database passwords
-- Certificate backup
+- Ports 80, 443 (`websecure`) and 8443 (`websecure-public`).
+- `config/traefik/` is mounted as a **directory**, so `dynamic.yml` edits hot-reload after a deploy (a single-file mount would pin the old inode).
+- Certs in `/mnt/synology/docker/core/traefik/acme.json`.
+- `zork-root` answers the bare `rsdn.io` host with a one-line nginx page.
+- Tailscale isn't in this stack any more: it runs as host `tailscaled` on ctr01.
 
----
+## authentik
 
-## Monitoring
+[Authentik](../services/authentik.md) 2026.5 at `sso.rsdn.io`. It provides the `authentik@docker` forward-auth middleware and OIDC for Grafana. Providers, applications and the `Homelab Admins` group are defined as blueprints in the repo, not in the UI.
 
-Comprehensive observability stack.
+## monitoring
 
-### Prometheus
+| Service | Role |
+|---------|------|
+| Prometheus 3.15 | Scrapes ctr01, nexus, pve-tc1, Synology, Home Assistant, the Studio, GitLab VM, Traefik, cAdvisor, DCGM |
+| Alertmanager | Routes alerts to Telegram |
+| Grafana 13 | Dashboards; OIDC login via Authentik |
+| Loki 3.7 + Promtail | Container logs; the Studio's Alloy pushes to `ctr01:3100` |
+| Vector | Syslog receiver on 5514/udp, forwards to Loki |
+| pve-exporter, snmp-exporter, unpoller, dcgm-exporter | Proxmox, Synology, UniFi, GPU |
+| docker-size-collector | Docker directory and volume sizes |
 
-Metrics collection and alerting.
+Alert rules: disk, GPU, volume. After a deploy that changes `prometheus.yml`, run `docker compose restart prometheus`: the file is a single-file bind mount, so a SIGHUP reloads the stale copy.
 
-| Property | Value |
-|----------|-------|
-| **Image** | `prom/prometheus:latest` |
-| **Port** | 9090 |
-| **URL** | [prometheus.rsdn.io](https://prometheus.rsdn.io) |
+## management
 
-**Scrape Targets:**
+| Service | Role |
+|---------|------|
+| Portainer EE 3.0 + agent | Docker UI |
+| Dozzle | Live container logs |
+| Semaphore + MySQL | Ansible UI |
+| Pulse | Proxmox and Docker monitor |
+| Backrest | Restic backups of ctr01's Docker volumes to `/mnt/synology/docker/backups/restic-repo` |
+| db-dumper | SQL dumps of live databases at 01:30, picked up by Backrest |
 
-- Node Exporter (all hosts)
-- cAdvisor (container metrics)
-- Traefik metrics
-- Application exporters
+## automation
 
-### Grafana
+- **Watchtower**: automatic container image updates.
+- **gitlab-sync** (gickup): nightly flat-file backup of every GitLab.com repo to the NAS.
 
-Dashboards and visualization.
+## ai
 
-| Property | Value |
-|----------|-------|
-| **Image** | `grafana/grafana:latest` |
-| **Port** | 3000 |
-| **URL** | [grafana.rsdn.io](https://grafana.rsdn.io) |
+Home Assistant's voice LLM and Open WebUI's web search. See [Local AI](../architecture/ai.md), [Ollama](../services/ollama.md), [SearXNG](../services/searxng.md).
 
-**Dashboards:**
+| Service | Port | Notes |
+|---------|------|-------|
+| ollama | 11434 | `gpt-oss-ha:20b`, whole RTX 2000E, keep-alive forever |
+| ollama-metrics | - | `/api/ps` → node-exporter textfile |
+| searxng | via gluetun | `search.rsdn.io` |
+| gluetun-searxng | 8081 | ProtonVPN egress for SearXNG |
 
-- Docker Host Overview
-- Traefik Metrics
-- Node Exporter Full
-- Loki Logs
-- Per-service dashboards
+Removed in 2026: Open WebUI (now on the Studio), vLLM, Whishper, LibreTranslate, n8n. Their volumes and NFS data were kept.
 
-### Loki
+## media
 
-Log aggregation.
+All of sabnzbd, nzbget, sonarr, radarr, lidarr, bazarr, prowlarr and seerr share `gluetun`'s network namespace, so their traffic leaves through ProtonVPN. Tdarr, Tunarr and ARM use the GPU. ARM rips CDs and DVDs from a Dell DW316 drive attached to ctr01.
 
-| Property | Value |
-|----------|-------|
-| **Image** | `grafana/loki:latest` |
-| **Port** | 3100 |
+`seerr` (`requests.rsdn.io`) is on the public entrypoint with a rate limit.
 
-**Log Sources:**
+## mediaservers
 
-- Promtail on all hosts
-- Docker container logs
-- Application logs
+| Service | Notes |
+|---------|-------|
+| Plex | Primary media server, NVENC |
+| Jellyfin | `jf.rsdn.io`, public entrypoint; back on ctr01 since 2026-10-27 after a stint on the Studio |
+| Emby | Secondary |
+| Tautulli | Plex statistics |
+| uhf-server | IPTV DVR backend, `ctr01:8001` |
 
-### Jaeger
+The project path is `compose-stacks/mediaservers` (renamed from `media-servers`). The stack runs with an extra compose file, so `hermes-docker compose-up` refuses it.
 
-Distributed tracing.
+## silo
 
-| Property | Value |
-|----------|-------|
-| **Image** | `jaegertracing/all-in-one:latest` |
-| **Port** | 16686 |
-| **URL** | [jaeger.rsdn.io](https://jaeger.rsdn.io) |
+[Silo](https://github.com/Silo-Server/silo-server), a pre-release media server with Jellyfin/Emby-compatible APIs, under evaluation next to the mediaservers stack. Web UI on `silo.rsdn.io` (8095), Jellyfin API on `silo-jf.rsdn.io` (8097) for Infuse and similar clients.
 
----
+## tracearr
 
-## Management
+[Tracearr](https://github.com/connorgallopo/tracearr): watch history and analytics for the media servers, on TimescaleDB.
 
-Container and infrastructure management tools.
+## dispatcharr
 
-### Portainer
+IPTV stream manager with HDHomeRun emulation for the media servers, GPU transcoding. `dispatcharr.rsdn.io`.
 
-Docker management UI.
+## devtools
 
-| Property | Value |
-|----------|-------|
-| **Image** | `portainer/portainer-ce:latest` |
-| **Port** | 9443 |
-| **URL** | [portainer.rsdn.io](https://portainer.rsdn.io) |
+code-server, Flame (start page built from `flame.*` Docker labels), IT-Tools, PrivateBin, and a containerized GitLab Runner. ctr01 also runs `gitlab-runner` as a host systemd service.
 
-**Features:**
+## gitlab-mirror
 
-- Container management
-- Stack deployment
-- Volume management
-- Image management
+Mirrors every GitLab.com group and project John owns or maintains into the self-hosted GitLab at `gitlab.rsdn.io` on a schedule.
 
-### Dozzle
+## technitium (ctr01)
 
-Real-time log viewer.
+Secondary Technitium DNS on 192.168.1.20:53; UI at `technitium-ctr.rsdn.io`. The primary runs on the Synology.
 
-| Property | Value |
-|----------|-------|
-| **Image** | `amir20/dozzle:latest` |
-| **Port** | 8080 |
-| **URL** | [dozzle.rsdn.io](https://dozzle.rsdn.io) |
+## stetter-io
 
-### Semaphore
+The public site **stetter.io**: a static Astro site built into an nginx image by CI. Cloudflare proxies it; the Traefik router is only on `websecure-public` and only accepts Cloudflare IPs. No cookies, analytics or third-party requests.
 
-Ansible automation UI.
+## frigate
 
-| Property | Value |
-|----------|-------|
-| **Image** | `semaphoreui/semaphore:latest` |
-| **Port** | 3000 |
-| **URL** | [semaphore.rsdn.io](https://semaphore.rsdn.io) |
+Frigate 0.17 (TensorRT) with Postgres and Redis. **Disabled** since 2026-10-28 (`deploy.replicas: 0`) to free VRAM for Home Assistant's LLM and cut fan noise. Recordings stay on `/volume1/frigate`.
 
----
+## gitlab
 
-## Automation
+GitLab CE moved off ctr01 to a VM on the Synology (192.168.1.156). The compose service is behind the `disabled` profile; `gitlab.rsdn.io` is now a file-provider route in core.
 
-### Watchtower
+## standards
 
-Automatic container updates.
+Shared standards for every stack (`CLAUDE-GLOBAL.md`, `CLAUDE-TEMPLATE.md`, `STORAGE.md`). A `sync` job fast-forwards `/opt/stacks/standards` on each merge.
 
-| Property | Value |
-|----------|-------|
-| **Image** | `containrrr/watchtower:latest` |
-| **Schedule** | Daily at 4 AM |
+## Storage Conventions
 
-**Configuration:**
+| Kind | Where |
+|------|-------|
+| Databases, app state | Local named volumes under `/var/lib/docker` (411 GB LV) |
+| Bulk data, certs, media | NFS: `/mnt/synology/{docker,media,frigate,gitlab-mirror}` over 10GbE |
+| Config | Git-tracked in the stack repo, bind-mounted read-only |
 
-```yaml
-services:
-  watchtower:
-    image: containrrr/watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_SCHEDULE=0 0 4 * * *
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_LABEL_ENABLE=true
-```
-
-!!! warning "Excluded Services"
-    Add `com.centurylinklabs.watchtower.enable=false` label to critical services like Traefik, GitLab, and databases.
-
----
-
-## Media Servers
-
-Media streaming and management.
-
-### Plex
-
-Primary media server with hardware transcoding.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `plexinc/pms-docker:latest` |
-| **Port** | 32400 |
-| **URL** | [plex.rsdn.io](https://plex.rsdn.io) |
-| **GPU** | RTX 2000E ADA (hardware transcoding) |
-
-**Libraries:**
-
-- Movies
-- TV Shows
-- Music
-
-### Jellyfin
-
-Open-source media server alternative.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `jellyfin/jellyfin:latest` |
-| **Port** | 8096 |
-| **URL** | [jellyfin.rsdn.io](https://jellyfin.rsdn.io) |
-
-### Emby
-
-Additional media server.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `emby/embyserver:latest` |
-| **Port** | 8096 |
-| **URL** | [emby.rsdn.io](https://emby.rsdn.io) |
-
-### Tautulli
-
-Plex monitoring and statistics.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `tautulli/tautulli:latest` |
-| **Port** | 8181 |
-| **URL** | [tautulli.rsdn.io](https://tautulli.rsdn.io) |
-
----
-
-## Media
-
-Media automation stack (behind VPN).
-
-!!! note "VPN Protection"
-    All services in this stack route through a VPN container for privacy.
-
-### Sonarr
-
-TV show automation.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `linuxserver/sonarr:latest` |
-| **Port** | 8989 |
-| **URL** | [sonarr.rsdn.io](https://sonarr.rsdn.io) |
-
-### Radarr
-
-Movie automation.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `linuxserver/radarr:latest` |
-| **Port** | 7878 |
-| **URL** | [radarr.rsdn.io](https://radarr.rsdn.io) |
-
-### Lidarr
-
-Music automation.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `linuxserver/lidarr:latest` |
-| **Port** | 8686 |
-| **URL** | [lidarr.rsdn.io](https://lidarr.rsdn.io) |
-
-### Bazarr
-
-Subtitle automation.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `linuxserver/bazarr:latest` |
-| **Port** | 6767 |
-| **URL** | [bazarr.rsdn.io](https://bazarr.rsdn.io) |
-
-### SABnzbd
-
-Usenet downloader.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `linuxserver/sabnzbd:latest` |
-| **Port** | 8080 |
-| **URL** | [sabnzbd.rsdn.io](https://sabnzbd.rsdn.io) |
-
----
-
-## AI
-
-AI and machine learning workloads.
-
-### Ollama
-
-Local LLM server.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `ollama/ollama:latest` |
-| **Port** | 11434 |
-| **GPU** | RTX 2000E ADA |
-
-**Models:**
-
-- llama3
-- codellama
-- mistral
-
-### Open-WebUI
-
-ChatGPT-like interface for Ollama.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `ghcr.io/open-webui/open-webui:main` |
-| **Port** | 8080 |
-| **URL** | [chat.rsdn.io](https://chat.rsdn.io) |
-
-### n8n
-
-Workflow automation.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `n8nio/n8n:latest` |
-| **Port** | 5678 |
-| **URL** | [n8n.rsdn.io](https://n8n.rsdn.io) |
-
-### Whisper
-
-Speech-to-text transcription.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `onerahmet/openai-whisper-asr-webservice:latest` |
-| **Port** | 9000 |
-| **GPU** | RTX 2000E ADA |
-
----
-
-## Frigate
-
-Network video recorder with AI object detection.
-
-### Frigate NVR
-
-| Property | Value |
-|----------|-------|
-| **Image** | `ghcr.io/blakeblackshear/frigate:stable` |
-| **Port** | 5000 |
-| **URL** | [frigate.rsdn.io](https://frigate.rsdn.io) |
-| **GPU** | RTX 2000E ADA (object detection) |
-
-**Features:**
-
-- 24/7 recording
-- Object detection (person, vehicle, animal)
-- Home Assistant integration
-- Motion zones
-
-### MQTT (Mosquitto)
-
-MQTT broker for Frigate events.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `eclipse-mosquitto:latest` |
-| **Port** | 1883 |
-
----
-
-## Dev Tools
-
-Development and utility tools.
-
-### code-server
-
-VS Code in the browser.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `codercom/code-server:latest` |
-| **Port** | 8443 |
-| **URL** | [code.rsdn.io](https://code.rsdn.io) |
-
-### Flame
-
-Infrastructure dashboard and start page. Displays all Docker applications and organized bookmarks. See [Flame service documentation](../services/flame.md) for details.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `pawelmalak/flame:latest` |
-| **Port** | 5005 |
-| **URL** | [flame.rsdn.io](https://flame.rsdn.io) |
-
-### IT-Tools
-
-Developer utilities.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `corentinth/it-tools:latest` |
-| **Port** | 80 |
-| **URL** | [tools.rsdn.io](https://tools.rsdn.io) |
-
----
-
-## GitLab
-
-Self-hosted GitLab CE instance.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `gitlab/gitlab-ce:latest` |
-| **Ports** | 80, 443, 22 |
-| **URL** | [gitlab.rsdn.io](https://gitlab.rsdn.io) |
-
-**Features:**
-
-- Git repository hosting
-- CI/CD pipelines
-- Container registry
-- Issue tracking
-
-!!! warning "Resource Intensive"
-    GitLab requires significant resources. Allocate at least 4GB RAM.
-
----
-
-## Technitium (ctr01)
-
-**Secondary/backup DNS server** for redundancy.
-
-| Property | Value |
-|----------|-------|
-| **Image** | `technitium/dns-server:latest` |
-| **Port** | 5380 (web), 53 (DNS) |
-| **URL** | [dns-ctr01.rsdn.io](https://dns-ctr01.rsdn.io) |
-
-!!! info "Backup DNS Node"
-    This Technitium instance is the **secondary DNS** in the cluster. It syncs zones from the primary DNS on the Synology NAS via zone transfer.
-
-    **Why secondary on ctr01?**
-
-    - Primary DNS runs on Synology for stability (not subject to ctr01 container churn)
-    - This provides redundancy if Synology is down for maintenance
-    - Clients should use: Primary (192.168.1.4), Secondary (192.168.1.20)
-
-**Configuration:**
-
-- Receives zone transfers from primary (192.168.1.4)
-- Read-only zones (changes made on primary only)
-- Automatic sync keeps zones current
-
----
-
-## MCP
-
-Model Context Protocol servers for AI agents.
-
-| Property | Value |
-|----------|-------|
-| **Image** | Various MCP server images |
-| **Purpose** | Tools for Claude and other AI agents |
-
-**Available Servers:**
-
-- Filesystem MCP
-- Git MCP
-- Web search MCP
-
----
-
-## Common Operations
-
-### Starting a Stack
-
-```bash
-cd /opt/stacks/stack-name
-docker compose up -d
-```
-
-### Viewing Logs
-
-```bash
-# All services in stack
-docker compose logs -f
-
-# Specific service
-docker compose logs -f service-name
-```
-
-### Updating a Stack
-
-```bash
-docker compose pull
-docker compose up -d
-docker image prune -f
-```
-
-### Stopping a Stack
-
-```bash
-docker compose down
-```
-
-### Restarting a Service
-
-```bash
-docker compose restart service-name
-```
-
-## Related Documentation
-
-- [Synology Stacks](synology.md)
-- [Stack Overview](index.md)
-- [Service Catalog](../services/index.md)
-- [Adding New Stacks](../runbooks/new-stack.md)
+Containers run as UID 1027 (`stetter`), which matches the Synology. Primary GIDs differ between the hosts (1027 on ctr01, 100 on the NAS), so mixed GIDs on NFS are normal; the owner UID is what matters.
