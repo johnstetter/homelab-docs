@@ -277,7 +277,7 @@ curl -X POST "http://$DNS/api/cache/clear?token=$TOKEN"
 
 ## Related
 
-- [Synology Stacks - Technitium (Primary)](../stacks/synology.md#technitium)
+- [Synology Stacks - Technitium (Primary)](../stacks/synology.md#containers-container-manager)
 - [ctr01 Stacks - Technitium (Secondary)](../stacks/ctr01.md#technitium-ctr01)
 - [Traefik](traefik.md) - Reverse proxy (uses DNS for routing)
 - [Technitium Official Docs](https://technitium.com/dns/)
