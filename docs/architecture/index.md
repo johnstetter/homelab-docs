@@ -16,14 +16,14 @@ The homelab is small on purpose: one hypervisor for containers, one Mac for AI, 
 ```mermaid
 graph TB
     subgraph Internet
-        CF[Cloudflare<br/>DNS + stetter.io proxy]
+        CF[Cloudflare<br/>DNS only]
         TS[Tailscale]
     end
 
     RTR[UDM Pro 192.168.1.1<br/>no port forwards, WireGuard backup]
 
     subgraph NEXUS["nexus — Proxmox 9.2, MS-A2 (192.168.1.12)"]
-        CTR01[ctr01 — Docker host<br/>Traefik, 17 stacks, RTX 2000E<br/>192.168.1.20]
+        CTR01[ctr01 — Docker host<br/>Traefik, 16 stacks, RTX 2000E<br/>192.168.1.20]
         DEV01[dev01 — bastion<br/>192.168.1.21]
         SEC01[sec01 — Kali<br/>192.168.1.25]
         CI01[ci01 — LXC<br/>192.168.1.22]
@@ -71,7 +71,7 @@ All containers live on ctr01, one Git repo and one `/opt/stacks/<stack>` directo
 | Platform | core (Traefik, Vault), authentik, monitoring, management, automation, technitium, standards |
 | AI | ai (Ollama for HA, SearXNG) |
 | Media | media (*arr, downloaders, Tdarr, Tunarr, ARM), mediaservers (Plex, Jellyfin, Emby), silo, tracearr, dispatcharr |
-| Dev | devtools, gitlab-mirror, gitlab (disabled; GitLab moved to a VM), stetter-io |
+| Dev | devtools, gitlab-mirror, gitlab (disabled; GitLab moved to a VM) |
 | Disabled | frigate (VRAM given to Ollama) |
 
 See [Stacks Overview](../stacks/index.md).

@@ -52,7 +52,7 @@ Storage network: nexus 10.0.10.1, syn 10.0.10.4, ctr01 10.0.10.20, sec01 10.0.10
 
 - Every web service is a CNAME to **`rprx.rsdn.io`** (ctr01, where Traefik listens), including the ones that actually live on the Studio, the GitLab VM or the Proxmox hosts. Traefik forwards those.
 - Hosts themselves have A records (`studio`, `nexus`, `ha`, ...).
-- Public DNS for `rsdn.io` and `stetter.io` is Cloudflare. Nothing in the homelab is reachable from the internet, so no public record should point at the home WAN address.
+- Public DNS for `rsdn.io` and `stetter.io` is Cloudflare. Nothing in the homelab is reachable from the internet, so no public record should point at the home WAN address. `stetter.io` is served by Cloudflare Workers, not from here.
 - Tailscale clients get split DNS: `rsdn.io` → 192.168.1.4, so the same names work remotely.
 
 ## Reverse Proxy: Traefik

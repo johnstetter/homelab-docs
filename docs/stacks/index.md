@@ -4,7 +4,7 @@ Containers run in three places:
 
 | Where | How | What |
 |-------|-----|------|
-| **ctr01** | Docker Compose, one repo per stack under [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks), CI-deployed to `/opt/stacks/<stack>` | Almost everything: 17 stacks |
+| **ctr01** | Docker Compose, one repo per stack under [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks), CI-deployed to `/opt/stacks/<stack>` | Almost everything: 16 stacks |
 | **syn** | Synology Container Manager, `/volume1/docker/stacks/` | Primary DNS, node-exporter |
 | **Mac Studio** | OrbStack | Only the Hermes sandbox container; Ollama, Open WebUI and Hermes themselves are native LaunchDaemons |
 
@@ -32,7 +32,6 @@ graph TB
         subgraph Dev
             devtools[devtools]
             mirror[gitlab-mirror]
-            site[stetter-io]
         end
     end
     subgraph syn["syn (192.168.1.4)"]

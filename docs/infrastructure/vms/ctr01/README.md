@@ -142,7 +142,7 @@ docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi
 
 ### Stack Organization
 
-**Stack Structure** (`/opt/stacks/`): one checkout per stack repo: `ai`, `authentik`, `automation`, `core`, `devtools`, `dispatcharr`, `frigate` (disabled), `gitlab` (disabled), `gitlab-mirror`, `management`, `media`, `mediaservers`, `monitoring`, `silo`, `standards`, `stetter-io`, `technitium`, `tracearr`. `/opt/stacks/CLAUDE.md` links to `standards/CLAUDE-GLOBAL.md`.
+**Stack Structure** (`/opt/stacks/`): one checkout per stack repo: `ai`, `authentik`, `automation`, `core`, `devtools`, `dispatcharr`, `frigate` (disabled), `gitlab` (disabled), `gitlab-mirror`, `management`, `media`, `mediaservers`, `monitoring`, `silo`, `standards`, `technitium`, `tracearr`. `/opt/stacks/CLAUDE.md` links to `standards/CLAUDE-GLOBAL.md`.
 
 ### Network Architecture
 

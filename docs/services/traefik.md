@@ -1,6 +1,6 @@
 # Traefik
 
-The single reverse proxy for every `*.rsdn.io` name and for `stetter.io`.
+The single reverse proxy for every `*.rsdn.io` name. (`stetter.io` no longer runs here: it's served by Cloudflare Workers.)
 
 | Property | Value |
 |----------|-------|
