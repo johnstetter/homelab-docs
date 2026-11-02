@@ -47,7 +47,7 @@ Shared Docker networks: `traefik_proxy` (ingress) and `monitoring_external` (scr
 
 Traefik v3.7 and Vault 2.2. See [Traefik](../services/traefik.md) and [Vault](../services/vault.md).
 
-- Ports 80, 443 (`websecure`) and 8443 (`websecure-public`).
+- Ports 80 and 443 (`websecure`). No internet-facing entrypoint (removed 2026-11-02).
 - `config/traefik/` is mounted as a **directory**, so `dynamic.yml` edits hot-reload after a deploy (a single-file mount would pin the old inode).
 - Certs in `/mnt/synology/docker/core/traefik/acme.json`.
 - `zork-root` answers the bare `rsdn.io` host with a one-line nginx page.
