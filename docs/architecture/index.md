@@ -6,7 +6,7 @@ The homelab is small on purpose: one hypervisor for containers, one Mac for AI, 
 
 1. **Infrastructure as code.** VMs from OpenTofu + Ansible ([vm-platform](https://gitlab.com/stetter-homelab/vm-platform)), containers from one repo per Docker Compose stack ([compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks)), Macs from [mac-config](https://gitlab.com/stetter-homelab/mac-config).
 2. **CI deploys.** A merge to `main` in a stack repo runs Trivy, Gitleaks and `docker compose config`, then SSHes to ctr01 and brings the stack up. Renovate keeps images current.
-3. **One front door.** Traefik on ctr01 terminates TLS for every `*.rsdn.io` name, and only routers that opt in to `websecure-public` are reachable from the internet.
+3. **One front door, closed to the internet.** Traefik on ctr01 terminates TLS for every `*.rsdn.io` name. No ports are forwarded; remote access is Tailscale, with the UDM Pro's WireGuard VPN as a backup.
 4. **Local inference.** LLMs run on the Mac Studio and on ctr01's GPU, never in the cloud.
 5. **Least privilege for agents.** Hermes and other automation get their own accounts and narrow wrappers.
 6. **Stock defaults over custom config.** Every override has to earn its place.
@@ -16,14 +16,14 @@ The homelab is small on purpose: one hypervisor for containers, one Mac for AI, 
 ```mermaid
 graph TB
     subgraph Internet
-        CF[Cloudflare<br/>DNS + stetter.io proxy]
+        CF[Cloudflare<br/>DNS only]
         TS[Tailscale]
     end
 
-    RTR[UDM Pro 192.168.1.1<br/>WAN 443 → ctr01:8443]
+    RTR[UDM Pro 192.168.1.1<br/>no port forwards, WireGuard backup]
 
     subgraph NEXUS["nexus — Proxmox 9.2, MS-A2 (192.168.1.12)"]
-        CTR01[ctr01 — Docker host<br/>Traefik, 17 stacks, RTX 2000E<br/>192.168.1.20]
+        CTR01[ctr01 — Docker host<br/>Traefik, 16 stacks, RTX 2000E<br/>192.168.1.20]
         DEV01[dev01 — bastion<br/>192.168.1.21]
         SEC01[sec01 — Kali<br/>192.168.1.25]
         CI01[ci01 — LXC<br/>192.168.1.22]
@@ -41,7 +41,7 @@ graph TB
         NFS[(NFS: docker, media,<br/>frigate, gitlab-mirror)]
     end
 
-    CF --> RTR --> CTR01
+    RTR --> CTR01
     TS -.subnet route.-> CTR01
     CTR01 -->|file-provider routes| STUDIO
     CTR01 -->|file-provider routes| GL
@@ -71,7 +71,7 @@ All containers live on ctr01, one Git repo and one `/opt/stacks/<stack>` directo
 | Platform | core (Traefik, Vault), authentik, monitoring, management, automation, technitium, standards |
 | AI | ai (Ollama for HA, SearXNG) |
 | Media | media (*arr, downloaders, Tdarr, Tunarr, ARM), mediaservers (Plex, Jellyfin, Emby), silo, tracearr, dispatcharr |
-| Dev | devtools, gitlab-mirror, gitlab (disabled; GitLab moved to a VM), stetter-io |
+| Dev | devtools, gitlab-mirror, gitlab (disabled; GitLab moved to a VM) |
 | Disabled | frigate (VRAM given to Ollama) |
 
 See [Stacks Overview](../stacks/index.md).

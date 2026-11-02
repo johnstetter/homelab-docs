@@ -18,7 +18,6 @@ Every Docker Compose stack on ctr01, as deployed on 2026-10-30. Each stack is it
 | [devtools](#devtools) | code-server, flame, it-tools, privatebin, gitlab-runner | code, flame, it-tools, privatebin |
 | [gitlab-mirror](#gitlab-mirror) | gitlab-mirror | - |
 | [technitium](#technitium-ctr01) | technitium | technitium-ctr (via core) |
-| [stetter-io](#stetter-io) | web | stetter.io, www.stetter.io (public) |
 | [frigate](#frigate) | frigate, postgres, redis | frigate (**disabled**) |
 | [gitlab](#gitlab) | gitlab | **disabled**, moved to a VM |
 | [standards](#standards) | - | Shared CLAUDE.md standards, not a running stack |
@@ -47,7 +46,7 @@ Shared Docker networks: `traefik_proxy` (ingress) and `monitoring_external` (scr
 
 Traefik v3.7 and Vault 2.2. See [Traefik](../services/traefik.md) and [Vault](../services/vault.md).
 
-- Ports 80, 443 (`websecure`) and 8443 (`websecure-public`).
+- Ports 80 and 443 (`websecure`). No internet-facing entrypoint (removed 2026-11-02).
 - `config/traefik/` is mounted as a **directory**, so `dynamic.yml` edits hot-reload after a deploy (a single-file mount would pin the old inode).
 - Certs in `/mnt/synology/docker/core/traefik/acme.json`.
 - `zork-root` answers the bare `rsdn.io` host with a one-line nginx page.
@@ -141,10 +140,6 @@ Mirrors every GitLab.com group and project John owns or maintains into the self-
 ## technitium (ctr01)
 
 Secondary Technitium DNS on 192.168.1.20:53; UI at `technitium-ctr.rsdn.io`. The primary runs on the Synology.
-
-## stetter-io
-
-The public site **stetter.io**: a static Astro site built into an nginx image by CI. Cloudflare proxies it; the Traefik router is only on `websecure-public` and only accepts Cloudflare IPs. No cookies, analytics or third-party requests.
 
 ## frigate
 

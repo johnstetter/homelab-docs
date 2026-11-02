@@ -85,7 +85,6 @@ Every web service and where it lives, as of 2026-10-30. All URLs are internal (L
 | Service | URL | Host |
 |---------|-----|------|
 | Home Assistant | [home.rsdn.io](https://home.rsdn.io) | pve-tc1 (192.168.1.3) |
-| stetter.io | [stetter.io](https://stetter.io) (**public**, via Cloudflare) | ctr01 |
 | [Frigate](frigate.md) | frigate.rsdn.io | ctr01, **disabled** |
 
 ## Retired

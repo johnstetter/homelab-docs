@@ -52,52 +52,41 @@ Storage network: nexus 10.0.10.1, syn 10.0.10.4, ctr01 10.0.10.20, sec01 10.0.10
 
 - Every web service is a CNAME to **`rprx.rsdn.io`** (ctr01, where Traefik listens), including the ones that actually live on the Studio, the GitLab VM or the Proxmox hosts. Traefik forwards those.
 - Hosts themselves have A records (`studio`, `nexus`, `ha`, ...).
-- Public DNS for `rsdn.io` and `stetter.io` is Cloudflare. Only the few internet-facing names exist there (see below).
+- Public DNS for `rsdn.io` and `stetter.io` is Cloudflare. Nothing in the homelab is reachable from the internet, so no public record should point at the home WAN address. `stetter.io` is served by Cloudflare Workers, not from here.
 - Tailscale clients get split DNS: `rsdn.io` → 192.168.1.4, so the same names work remotely.
 
 ## Reverse Proxy: Traefik
 
-All HTTP(S) goes through one Traefik on ctr01. Traefik routes on the TLS SNI/`Host` header, not on DNS, so **which entrypoint a router listens on is what decides whether it's reachable from the internet.**
+All HTTP(S) goes through one Traefik on ctr01. Nothing is reachable from the internet: since 2026-11-02 the UDM Pro forwards no ports, and every router is on `websecure`. Remote access is Tailscale, with the UDM Pro's WireGuard VPN as a backup.
 
 ```mermaid
 graph LR
-    subgraph Internet
-        U[Internet user]
-        CF[Cloudflare proxy]
+    subgraph Remote
+        TS[Tailscale client]
+        WG[WireGuard client]
     end
     subgraph Home
-        UDM[UDM Pro<br/>WAN 443 → ctr01:8443]
+        LAN[LAN client]
+        UDM[UDM Pro<br/>WireGuard server, no port forwards]
+        SR[Subnet router<br/>ctr01-ts / nexus-ts]
         subgraph ctr01["ctr01 Traefik"]
-            WS[websecure :443<br/>LAN + tailnet]
-            WSP[websecure-public :8443<br/>internet, opt-in]
+            WS[websecure :443]
         end
-        LAN[LAN / Tailscale client]
     end
-    U -->|stetter.io| CF --> UDM
-    U -->|jf / requests .rsdn.io| UDM
-    UDM --> WSP
+    TS --> SR --> WS
+    WG --> UDM --> WS
     LAN -->|*.rsdn.io| WS
-    WSP --> PUB[stetter-io, jellyfin, seerr]
     WS --> ALL[every router]
 ```
 
 | Entrypoint | Port | Reachable from | Use |
 |------------|------|----------------|-----|
 | `web` | 80 | LAN | Permanent redirect to HTTPS |
-| `websecure` | 443 | LAN, tailnet | Default for every router |
-| `websecure-public` | 8443 | Internet (UDM Pro forwards WAN 443 here) | Opt-in per router |
+| `websecure` | 443 | LAN, tailnet, WireGuard | Every router |
 
-**Routers on `websecure-public`** (as of 2026-10-30):
+Traefik routes on the TLS SNI/`Host` header, not on DNS, so anything that could reach an entrypoint from the WAN could reach any router on it by guessing a hostname. Keep it closed: don't forward WAN ports to ctr01 and don't add internet-facing entrypoints. People who need a service are invited to the tailnet.
 
-| Router | Host | Protection |
-|--------|------|------------|
-| `stetter-io` | `stetter.io`, `www.stetter.io` | Cloudflare-proxied; `ipAllowList` admits Cloudflare ranges only |
-| `jellyfin`, `jellyfin-auth` | `jf.rsdn.io` | Jellyfin login; rate limit on the auth paths |
-| `seerr` | `requests.rsdn.io` | Seerr login; rate limit |
-
-Everything else stays on `websecure`. Never forward WAN traffic to ctr01:443.
-
-**Certificates:** Let's Encrypt wildcard `rsdn.io` + `*.rsdn.io` via Cloudflare DNS-01, on both TLS entrypoints. No port 80 validation needed.
+**Certificates:** Let's Encrypt wildcard `rsdn.io` + `*.rsdn.io` via Cloudflare DNS-01. No port 80 validation needed.
 
 **Admin UIs** use the Authentik forward-auth middleware (`authentik@docker`). The Traefik dashboard is the first; it admits only the `Homelab Admins` group. An IP allowlist can't do this job: tailnet traffic arrives through the subnet router SNATed to a LAN address.
 
@@ -118,7 +107,7 @@ The Studio's Open WebUI and Hermes ports are firewalled with pf so **only ctr01 
 
 See [Traefik](../services/traefik.md) for labels and operations.
 
-## Remote Access: Tailscale
+## Remote Access: Tailscale (primary) and WireGuard (backup)
 
 | Node | Role |
 |------|------|
@@ -129,15 +118,13 @@ See [Traefik](../services/traefik.md) for labels and operations.
 
 Remote clients reach every `*.rsdn.io` name through split DNS and the subnet route, landing on `websecure` like a LAN client. ctr01 runs `--accept-dns=false --accept-routes=false` so it never routes the LAN back through the tailnet.
 
+**Backup:** the UDM Pro's own WireGuard VPN stays enabled for direct access when Tailscale isn't an option. It's the only thing on the WAN side that accepts connections.
+
 Both ctr01 and nexus advertise `192.168.1.0/24`; Tailscale uses one at a time and fails over to the other. On 2026-10-30 ctr01 was the active one (`tailscale status --json` lists it under `PrimaryRoutes`).
 
 ## Inbound Firewall (UDM Pro)
 
-| WAN port | Forwarded to | Purpose |
-|----------|--------------|---------|
-| 443/tcp | ctr01:8443 | Traefik `websecure-public` |
-
-Other port forwards (for example Plex 32400) weren't re-checked in this pass.
+No port forwards (2026-11-02). The old WAN 443 → ctr01:8443 forward and Traefik's `websecure-public` entrypoint were removed. The UDM Pro's WireGuard server is the only inbound service.
 
 ## Outbound VPN
 
@@ -153,5 +140,5 @@ tailscale status                         # which node serves 192.168.1.0/24
 ```
 
 - **404 from Traefik:** no router matches the Host, or the container isn't on `traefik_proxy`.
-- **Works on the LAN, not from the internet:** the router isn't on `websecure-public` (usually correct).
+- **Works on the LAN, not remotely:** check that the client is on the tailnet (or WireGuard) and that split DNS resolves `rsdn.io` to 192.168.1.4. Nothing is reachable from the open internet by design.
 - **chat/hermes 502:** the Studio daemon is down, or its pf anchor no longer lists ctr01's IP.
