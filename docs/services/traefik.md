@@ -103,4 +103,4 @@ docker logs traefik 2>&1 | grep -i acme
 | Works on LAN, not remotely | Client on the tailnet (or WireGuard)? Split DNS resolving `rsdn.io` to 192.168.1.4? |
 | Dashboard errors | Authentik down: `docker ps | grep authentik` |
 | `dynamic.yml` change ignored | YAML error: `docker logs traefik | grep -i error` |
-| Static config change ignored | `traefik.yml` changes need `docker compose restart traefik` |
+| Static config change ignored | `traefik.yml` is read at startup. Core's deploy restarts Traefik when it changes (`RESTART_ON_CHANGE`, ci-templates v1.14.0); by hand: `docker compose restart traefik` |
