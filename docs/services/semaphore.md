@@ -9,7 +9,7 @@ Semaphore is a modern web UI for Ansible that provides a clean interface for run
 | **URL** | [semaphore.rsdn.io](https://semaphore.rsdn.io) |
 | **Stack** | [compose-stacks/management](https://gitlab.com/stetter-homelab/compose-stacks/management) |
 | **Port** | 3000 |
-| **Image** | `semaphoreui/semaphore:latest` |
+| **Image** | `semaphoreui/semaphore:v2.19.17` |
 
 ## Authentication
 

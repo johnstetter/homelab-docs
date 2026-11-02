@@ -1,244 +1,114 @@
 # Hardware Inventory
 
-Complete inventory of all hardware in the Stetter Homelab.
+Everything with a power cord in the Stetter Homelab, as probed on 2026-10-30.
 
 ## Overview
 
-| Host | Role | Location | Status |
-|------|------|----------|--------|
-| pve-ms-a2 | Primary Hypervisor | Rack | Active |
-| core.rsdn.io | K8s Development Sandbox | Rack | Active |
-| pve-tc1 | Home Automation | Rack | Active |
-| syn | NAS/Storage | Rack | Active |
-| rtr | Network Gateway | Rack | Active |
+| Host | Role | IP | Status |
+|------|------|----|--------|
+| nexus | Primary Proxmox hypervisor (ctr01, dev01, sec01, ci01) | 192.168.1.12 | Active |
+| studio | Mac Studio: local AI inference, Open WebUI, Hermes agent | 192.168.1.95 | Active |
+| pve-tc1 | Proxmox host for Home Assistant | 192.168.1.11 | Active |
+| syn | Synology NAS: storage, primary DNS, GitLab VM | 192.168.1.4 | Active |
+| rtr | UniFi Dream Machine Pro: gateway and firewall | 192.168.1.1 | Active |
+| core.rsdn.io | Former Kubernetes sandbox | 192.168.1.5 | Offline |
 
 ## Compute
 
-### pve-ms-a2 (Primary Hypervisor)
+### nexus (Minisforum MS-A2)
 
-**Minisforum MS-A2**
-
-| Component | Specification |
-|-----------|---------------|
-| **CPU** | AMD Ryzen 9 9955HX |
-| **RAM** | 64GB DDR5 |
-| **GPU** | NVIDIA RTX 2000E ADA |
-| **Storage** | NVMe SSD (OS + VMs) |
-| **Network** | 2.5GbE + 10GbE (via Synology) |
-| **IP Address** | 192.168.1.12 |
-| **OS** | Proxmox VE 8.x |
-
-**Hosted VMs:**
-
-| VM | vCPUs | RAM | Disk | OS | Purpose |
-|----|-------|-----|------|-----|---------|
-| ctr01 | 8 | 32GB | 100GB | Debian 13 | Docker Host |
-| dev01 | 4 | 16GB | 50GB | Ubuntu 24.04 | Dev/Bastion |
-
-**GPU Passthrough:**
-
-The RTX 2000E ADA is passed through to ctr01 for:
-
-- Plex hardware transcoding
-- Frigate object detection
-- Ollama LLM inference
-- Whisper speech-to-text
-
-### core.rsdn.io (K8s Development Sandbox)
-
-**Supermicro X9DRL-3F/iF Custom Build**
+The main hypervisor. Every Docker stack runs here, inside ctr01.
 
 | Component | Specification |
 |-----------|---------------|
-| **CPU** | Dual Intel Xeon E5-2670 v1 @ 2.60GHz (32C total: 2×8C×2T) |
-| **RAM** | 256GB DDR3 ECC |
-| **Storage** | Multiple NVMe + SATA (VMs + Templates) + 42TB NFS storage |
-| **Network** | 1GbE + NFS access to Synology |
-| **IP Address** | 192.168.1.5 |
-| **OS** | Proxmox VE 8.x |
+| **CPU** | AMD Ryzen 9 9955HX (16C/32T) |
+| **RAM** | 64 GB DDR5 |
+| **GPU** | NVIDIA RTX 2000E Ada, 16 GB (passed through to ctr01) |
+| **Storage** | 1 TB Kingston NVMe (Proxmox, `local`/`local-lvm`) + 4 TB Samsung 990 EVO Plus (ZFS pool `vm-storage`, VM disks) |
+| **Network** | `vmbr0` 192.168.1.12 (LAN), `vmbr1` 10.0.10.1 (10GbE DAC to the Synology) |
+| **OS** | Proxmox VE 9.2 |
 
-**Role:** Kubernetes and Talos Linux development sandbox with extensive VM experimentation capacity.
+| Guest | Type | vCPU | RAM | Disk | OS | Purpose |
+|-------|------|------|-----|------|----|---------|
+| 100 ctr01 | VM | 10 | 32 GB | 600 GB | Debian 13 | Docker host, GPU passthrough |
+| 101 dev01 | VM | 2 | 4 GB | 100 GB | Ubuntu 26.04 | Bastion / dev box |
+| 110 sec01 | VM | 4 | 12 GB | 120 GB | Kali Rolling | Security testing |
+| 502 ci01 | LXC | 4 | 4 GB | 32 GB | Debian 13 | Planned OpenTofu CI runner (provisioned, runner not installed yet) |
+| 501 mail-bridge | LXC | - | - | - | - | Stopped |
 
-**Active VM Projects:**
+Templates 9000-9003 and 9100 are kept for cloning (see [VM Platform](../infrastructure/vm-platform.md)).
 
-| Project | VM Range | Count | Specs | Purpose |
-|---------|----------|-------|-------|---------|
-| **Production K3s** | 106-115 | 7 VMs | 16GB each | HA K8s cluster |
-| **Talos Development** | 126-131 | 6 VMs | 4GB each | Talos Linux testing |
-| **NixOS/Terraform** | 120-125 | 6 VMs | 2-4GB each | Infrastructure-as-code |
-| **RHEL Testing** | 100-102 | 3 VMs | 8GB each | Enterprise Linux testing |
-| **Utility** | 200 | 1 VM | 8GB | Ansible automation |
-| **Templates** | 9000+ | 3 templates | - | Debian, Ubuntu, NixOS |
+The RTX 2000E is shared by Ollama (Home Assistant's voice LLM), Plex/Jellyfin/Emby/Tdarr/Tunarr/Dispatcharr transcoding, and the ARM ripper. Frigate is currently disabled to give Ollama the VRAM.
 
-**Total Active VMs:** ~26 VMs utilizing 256GB RAM capacity
+### studio (Mac Studio)
 
-**Storage Strategy:**
-- **VM Storage**: Local NVMe/SATA for VM disks  
-- **Persistent Data**: 42TB NFS mount for container storage
-- **Templates**: Optimized Packer-built base images
-
-**Network Configuration:**
-- **Management**: 192.168.1.0/24 via main switch
-- **Storage**: Direct NFS access to /volume1/* exports
-- **Inter-VM**: Isolated networks per project
-
-**Key Projects:**
-- **talos-platform**: CLI-based Talos cluster management
-- **talos-terraform-poc**: Terraform provider approach
-- **k8s-platform**: NixOS-based Kubernetes development
-
-### pve-tc1 (Home Automation)
-
-**Lenovo ThinkCentre**
+Added in 2026 as the local AI box. See [Mac Studio](../infrastructure/mac-studio.md) and [Local AI](ai.md).
 
 | Component | Specification |
 |-----------|---------------|
-| **CPU** | Intel Core i5 |
-| **RAM** | 16GB DDR4 |
-| **Storage** | 256GB SSD |
-| **Network** | 1GbE |
-| **IP Address** | 192.168.1.11 |
-| **OS** | Proxmox VE 8.x |
+| **Chip** | Apple M5 Max (18 cores: 6 Super + 12 Performance) |
+| **Memory** | 64 GB unified; GPU wired limit raised to 56 GiB |
+| **Storage** | 1 TB internal (models, OrbStack, Nix) + 2 TB external SSD `studio-ssd` (Parallels VMs and games only) |
+| **Network** | Ethernet 192.168.1.95 (Wi-Fi stays on for Apple Watch unlock) |
+| **OS** | macOS 27 |
 
-**Hosted VMs:**
+### pve-tc1 (Lenovo ThinkCentre M720q)
 
-| VM | vCPUs | RAM | Disk | OS | Purpose |
-|----|-------|-----|------|-----|---------|
-| Home Assistant | 2 | 4GB | 32GB | HAOS | Home Automation |
+| Component | Specification |
+|-----------|---------------|
+| **CPU** | Intel Core i5-8400T (6C) |
+| **RAM** | 16 GB |
+| **Network** | 1GbE, 192.168.1.11 |
+| **OS** | Proxmox VE 9.2 |
 
-!!! note "Dedicated Host"
-    Home Assistant runs on a dedicated host for reliability. If the main hypervisor goes down, home automation continues to function.
+| Guest | Type | RAM | Disk | Purpose |
+|-------|------|-----|------|---------|
+| 100 homeassistant | VM (HAOS) | 8 GB | 128 GB | Home Assistant, 192.168.1.3 |
+
+!!! note "Dedicated host"
+    Home Assistant stays on its own box so home automation survives nexus maintenance. Its voice LLM runs on ctr01, so voice commands do need nexus.
+
+### core.rsdn.io (offline)
+
+Dual-Xeon Supermicro build with 256 GB DDR3 that hosted the K3s, Talos and NixOS clusters. It doesn't answer on the network as of 2026-10-30; its docs are under [Archive](../infrastructure/k8s-platform.md). The old GPU host `gpu.rsdn.io` (192.168.1.10) is retired too.
 
 ## Storage
 
 ### syn (Synology DS1621+)
 
-**Synology DiskStation DS1621+**
-
 | Component | Specification |
 |-----------|---------------|
 | **CPU** | AMD Ryzen V1500B |
-| **RAM** | 32GB DDR4 ECC |
-| **Drive Bays** | 6x 3.5" + 2x NVMe |
-| **Network** | 10GbE + 4x 1GbE |
-| **IP Address** | 192.168.1.4 |
-| **OS** | DSM 7.x |
+| **RAM** | 32 GB DDR4 ECC |
+| **Network** | E10G21-F2 dual 10GbE (10.0.10.4, DAC to nexus) + 1GbE (192.168.1.4) |
+| **OS** | DSM 7.4 |
+| **Capacity** | ~42 TB SHR, ~59% used |
 
-**Storage Pools:**
+**NFS exports used by ctr01** (over the 10GbE link): `/volume1/docker`, `/volume1/media`, `/volume1/gitlab-mirror`, `/volume1/frigate`. The Studio mounts `/volume1/media` read-only at `/nas`. nexus mounts the NAS as Proxmox storage `synology` for backups; pve-tc1 uses CIFS.
 
-| Pool | Type | Capacity | RAID | Purpose |
-|------|------|----------|------|---------|
-| Volume 1 | HDD (5x 10.9TB) | 41.9TB | SHR | Docker, media, backups |
-
-**Cache:**
-
-| Drive | Type | Capacity | Purpose |
-|-------|------|----------|---------|
-| M.2 Drive 1 | Samsung SSD | 931.5GB | SSD read/write cache |
-
-**NFS Exports:**
-
-| Export | Path | Access | Purpose |
-|--------|------|--------|---------|
-| docker | /volume1/docker | ctr01 | Container persistent storage |
-| media | /volume1/media | ctr01 | Media library |
-| backups | /volume1/backups | All hosts | Backup destination |
-
-**Services Running:**
-
-- Docker (Container Manager)
-- Technitium DNS (Primary + ad blocking)
-- Node Exporter (Metrics)
+**Runs on the NAS:** Technitium DNS (primary), Pi-hole, node-exporter (Container Manager), and the GitLab CE VM (Virtual Machine Manager, 192.168.1.156). See [Synology Stacks](../stacks/synology.md).
 
 ## Network
 
-### rtr (UniFi Dream Machine Pro)
+| Device | Model | IP |
+|--------|-------|----|
+| rtr | UniFi Dream Machine Pro | 192.168.1.1 |
+| switch | UniFi US-16-150W | 192.168.1.2 |
+| ap-u6 | UniFi U6+ | 192.168.1.7 |
 
-| Component | Specification |
-|-----------|---------------|
-| **Model** | UDM-Pro |
-| **WAN** | 1Gbps Fiber |
-| **LAN Ports** | 8x 1GbE RJ45 |
-| **SFP+ Ports** | 2x 10GbE |
-| **IP Address** | 192.168.1.1 |
+See [Network Topology](network.md).
 
-**Features:**
+## Client Devices
 
-- UniFi Network Controller
-- IDS/IPS enabled
-- DPI (Deep Packet Inspection)
-- Automatic threat management
-- VPN server (WireGuard ready)
+| Device | Notes |
+|--------|-------|
+| MacBook Air M4 15" (24 GB) | Daily laptop, `air` 192.168.1.176, tailnet `air-ts`. Shares the mac-config setup with the Studio |
+| iPad | Client only |
+| iPhone | Client only, on the tailnet |
+| ThinkCentre desktop `bluefin` | Bluefin Linux, 192.168.1.13, tailnet `bluefin-tc1-ts` |
 
-### Network Switches
+The MacBook Pros are gone; the Studio and the Air replaced them.
 
-| Device | Model | Ports | Location |
-|--------|-------|-------|----------|
-| Core Switch | UniFi USW-Pro-24-PoE | 24x 1GbE + 2x 10GbE | Rack |
+## Monitoring
 
-## Power
-
-### UPS
-
-| Device | Model | Capacity | Protected Devices |
-|--------|-------|----------|-------------------|
-| Primary UPS | APC SMT1500RM2U | 1500VA | All rack equipment |
-
-**Runtime:** ~15 minutes at full load
-
-**Monitoring:** NUT (Network UPS Tools) on syn
-
-## Accessories
-
-### Cameras (Frigate)
-
-| Camera | Model | Location | Resolution |
-|--------|-------|----------|------------|
-| Front Door | Reolink RLC-810A | Exterior | 4K |
-| Garage | Reolink RLC-510A | Interior | 5MP |
-| Backyard | Reolink RLC-810A | Exterior | 4K |
-| Driveway | Reolink RLC-810A | Exterior | 4K |
-
-All cameras connect to Frigate NVR on ctr01 for:
-
-- 24/7 recording
-- Object detection (person, vehicle, animal)
-- Home Assistant integration
-
-## Future Hardware Plans
-
-!!! info "Planned Upgrades"
-
-    - [ ] Add second NVMe to Synology for cache
-    - [ ] Upgrade pve-tc1 to newer mini PC
-    - [ ] Add dedicated backup NAS
-    - [ ] 10GbE switch for high-speed backbone
-
-## Hardware Lifecycle
-
-| Host | Purchase Date | Warranty Expires | Replacement Plan |
-|------|---------------|------------------|------------------|
-| pve-ms-a2 | 2024-Q4 | 2027-Q4 | Evaluate in 2027 |
-| pve-tc1 | 2022-Q2 | Expired | Replace 2025 |
-| syn | 2023-Q1 | 2026-Q1 | Evaluate in 2026 |
-| rtr | 2022-Q1 | Expired | Replace when needed |
-
-## Maintenance
-
-### Regular Maintenance Tasks
-
-| Task | Frequency | Notes |
-|------|-----------|-------|
-| Firmware updates | Monthly | Check UniFi, Proxmox, DSM |
-| Disk health check | Weekly | Automated via SMART |
-| Dust cleaning | Quarterly | Physical cleaning |
-| UPS battery test | Annually | Run self-test |
-
-### Monitoring
-
-All hardware is monitored via:
-
-- **Prometheus** - Metrics collection
-- **Node Exporter** - Host-level metrics
-- **SMART** - Disk health
-- **SNMP** - Network devices (via UniFi)
+All hosts are scraped by Prometheus on ctr01: node-exporter on nexus, pve-tc1, ctr01, the Synology, Home Assistant and the Studio; pve-exporter for both Proxmox nodes; SNMP for the Synology; unpoller for UniFi; DCGM for the RTX 2000E; macmon for the Studio's GPU, power and temperatures. See [Prometheus](../services/prometheus.md).

@@ -33,7 +33,7 @@ Before attempting any recovery, ensure you have access to:
 | Resource | Location | Credentials |
 |----------|----------|-------------|
 | Synology NAS | syn.rsdn.io / 192.168.1.4 | 1Password: "Synology Admin" |
-| Proxmox | pve-ms-a2.rsdn.io / 192.168.1.12 | 1Password: "Proxmox Root" |
+| Proxmox | nexus.rsdn.io / 192.168.1.12 | 1Password: "Proxmox Root" |
 | GitLab | gitlab.com/stetter-homelab | SSH key or personal access token |
 | Cloudflare | cloudflare.com | 1Password: "Cloudflare" |
 | 1Password | 1password.com | Master password |
@@ -81,12 +81,12 @@ When recovering from major failures, restore services in this order:
 
 7. **Portainer** - Container management UI
 8. **Dozzle** - Log viewer
-9. **Watchtower** - Auto-updates
+9. **Authentik** - Needed for the Traefik dashboard and Grafana login
 
 ### Tier 4: Applications (Remaining time)
 
 10. **Media servers** - Plex, Jellyfin
-11. **AI services** - Ollama, Open-WebUI
+11. **AI services** - Ollama (HA voice), SearXNG; Open WebUI and Hermes are on the Mac Studio
 12. **Media automation** - Sonarr, Radarr
 13. **Development tools** - code-server, GitLab
 14. **Other stacks** - As needed
@@ -186,10 +186,10 @@ Access Proxmox to determine failure type:
 
 ```bash
 # From local machine or dev01
-ssh root@pve-ms-a2.rsdn.io
+ssh nexus
 
 # Or access web UI
-# https://pve-ms-a2.rsdn.io:8006
+# https://pve-nexus.rsdn.io
 ```
 
 **Identify failure type:**
@@ -305,13 +305,10 @@ git clone git@gitlab.com:stetter-homelab/compose-stacks/monitoring.git
 git clone git@gitlab.com:stetter-homelab/compose-stacks/management.git
 
 # Remaining stacks
-git clone git@gitlab.com:stetter-homelab/compose-stacks/automation.git
-git clone git@gitlab.com:stetter-homelab/compose-stacks/media-servers.git
-git clone git@gitlab.com:stetter-homelab/compose-stacks/media.git
-git clone git@gitlab.com:stetter-homelab/compose-stacks/ai.git
-git clone git@gitlab.com:stetter-homelab/compose-stacks/frigate.git
-git clone git@gitlab.com:stetter-homelab/compose-stacks/dev-tools.git
-git clone git@gitlab.com:stetter-homelab/compose-stacks/mcp.git
+for s in standards authentik automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror stetter-io frigate; do
+  git clone git@gitlab.com:stetter-homelab/compose-stacks/$s.git /opt/stacks/$s
+done
+ln -sfn standards/CLAUDE-GLOBAL.md /opt/stacks/CLAUDE.md
 ```
 
 !!! note "GitLab SSH Rate Limiting"
@@ -371,7 +368,7 @@ cd /opt/stacks/management
 docker compose up -d
 
 # Tier 4: Applications
-for stack in automation media-servers media ai frigate dev-tools mcp; do
+for stack in authentik automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror stetter-io; do
   cd /opt/stacks/$stack
   docker compose up -d
   sleep 10

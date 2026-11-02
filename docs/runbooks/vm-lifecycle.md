@@ -24,7 +24,7 @@ VMs are managed through the **vm-platform** repository using:
 
 **Infrastructure:**
 
-- **Hypervisor:** Proxmox 8.x on pve-ms-a2.rsdn.io (192.168.1.12)
+- **Hypervisor:** Proxmox 9.2 on nexus.rsdn.io (192.168.1.12)
 - **Storage Network:** 10.0.10.0/24 (10G direct connection)
 - **Management Network:** 192.168.1.0/24
 
@@ -461,12 +461,12 @@ lazygit             # Git TUI
 
 ```bash
 # Check Proxmox task log
-ssh pve-ms-a2 'cat /var/log/pve/tasks/active'
+ssh nexus 'sudo cat /var/log/pve/tasks/active'
 
 # Check VM console in Proxmox web UI
 
 # Check for locked VM
-ssh pve-ms-a2 'qm status 100'
+ssh nexus 'sudo qm status 100'
 ```
 
 **Solutions:**

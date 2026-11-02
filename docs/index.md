@@ -18,7 +18,7 @@ Welcome to the central documentation hub for the Stetter Homelab infrastructure.
 
     ---
 
-    Infrastructure as Code with Packer, OpenTofu, and Ansible
+    Proxmox guests with OpenTofu and Ansible; the Mac Studio's LaunchDaemons
 
     [:octicons-arrow-right-24: Infrastructure Overview](infrastructure/index.md)
 
@@ -26,7 +26,7 @@ Welcome to the central documentation hub for the Stetter Homelab infrastructure.
 
     ---
 
-    Docker Compose stacks running on ctr01 and Synology
+    Docker Compose stacks on ctr01 and the Synology
 
     [:octicons-arrow-right-24: Stacks Overview](stacks/index.md)
 
@@ -48,58 +48,42 @@ Welcome to the central documentation hub for the Stetter Homelab infrastructure.
 
 </div>
 
-## Infrastructure Overview
-
-The Stetter Homelab runs a **hybrid architecture** with specialized Proxmox hosts, Docker containers, Kubernetes clusters, and a Synology NAS for centralized storage.
-
-### Core Components
+## Infrastructure at a Glance
 
 | Component | Host | Description |
 |-----------|------|-------------|
-| **Docker Hypervisor** | pve-ms-a2 | Minisforum MS-A2 optimized for Docker workloads + GPU |
-| **K8s Sandbox** | core.rsdn.io | Dell PowerEdge for Kubernetes development (256GB RAM) |
-| **Docker Host** | ctr01 | Debian 13 VM hosting Docker stacks with RTX2000E ADA |
-| **Development** | dev01 | Ubuntu 24.04 VM for development and bastion access |
-| **Security Testing** | sec01 | Kali Linux VM for security testing and penetration testing |
-| **Kubernetes Clusters** | core.rsdn.io | Production K3s, Talos Linux, and NixOS dev clusters |
-| **NAS** | syn | Synology DS1621+ with 10GbE for high-speed storage |
-| **Home Automation** | pve-tc1 | ThinkCentre running dedicated Home Assistant |
-| **Network** | rtr | UniFi Dream Machine Pro with 10GbE uplinks |
+| **Hypervisor** | nexus | Minisforum MS-A2, Ryzen 9 9955HX, 64 GB, Proxmox 9.2 |
+| **Docker host** | ctr01 | Debian 13 VM on nexus with an RTX 2000E Ada: every Compose stack and Traefik |
+| **AI server** | Mac Studio | M5 Max, 64 GB: Ollama (MLX), Open WebUI, Hermes agent |
+| **Home automation** | pve-tc1 | ThinkCentre running Home Assistant OS |
+| **NAS** | syn | Synology DS1621+, 10GbE to nexus, primary DNS, GitLab VM |
+| **Network** | rtr | UniFi Dream Machine Pro |
+| **Clients** | | MacBook Air M4, iPad, iPhone |
 
-### Infrastructure Philosophy
+### What Changed in 2026
 
-**Hybrid Approach**:
-- **MS-A2**: Optimized for Docker workloads with GPU passthrough
-- **core.rsdn.io**: Dedicated to Kubernetes experimentation and development
-- **Specialization**: Each host optimized for specific workload types
+- **Local AI.** A Mac Studio runs Qwen3.8 27B for the Hermes agent and Open WebUI; ctr01's GPU runs `gpt-oss-ha:20b` for Home Assistant voice. See [Local AI](architecture/ai.md).
+- **Traefik entrypoints.** Internal routers sit on `websecure` (443); internet exposure is opt-in via `websecure-public` (8443, WAN 443 forwards there). Admin UIs are behind Authentik. See [Network Topology](architecture/network.md#reverse-proxy-traefik).
+- **Tailscale** subnet routing with split DNS replaces any need for a VPN into the LAN.
+- **GitLab** moved from a container on ctr01 to a VM on the Synology.
+- **Retired:** the MacBook Pros, core.rsdn.io and its Kubernetes/Talos clusters, gpu.rsdn.io, n8n, Whishper, vLLM.
 
 ### Domain and DNS
 
-- **Primary Domain:** `rsdn.io`
-- **DNS Provider:** Cloudflare
-- **SSL/TLS:** Let's Encrypt wildcard certificates via Traefik
-- **Internal DNS:** Technitium (primary on syn, secondary on ctr01)
-- **Ad Blocking:** Technitium DNS (built-in blocking)
+- **Internal:** `*.rsdn.io` → CNAME `rprx.rsdn.io` (ctr01), served by Technitium (primary on syn, secondary on ctr01)
+- **Public:** Cloudflare DNS; `stetter.io` is Cloudflare-proxied
+- **TLS:** Let's Encrypt wildcard via Traefik (Cloudflare DNS-01)
 
-## Repository Structure
+## Repositories
 
-All infrastructure is managed as code across multiple GitLab repositories:
-
-| Repository | Purpose | Status |
-|------------|---------|--------|
-| [stetter-homelab/homelab-docs](https://gitlab.com/stetter-homelab/homelab-docs) | This documentation site | ✅ Active |
-| [stetter-homelab/vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | Packer, OpenTofu, and Ansible for VM provisioning | ✅ Active |
-| [stetter-homelab/k8s-platform](https://gitlab.com/stetter-homelab/k8s-platform) | NixOS-based Kubernetes cluster management | ✅ Active |
-| [stetter-homelab/talos-platform](https://gitlab.com/stetter-homelab/talos-platform) | CLI-based Talos Linux cluster management | ✅ Active |
-| [stetter-homelab/talos-terraform-poc](https://gitlab.com/stetter-homelab/talos-terraform-poc) | Terraform provider approach for Talos | 🔄 Development |
-| [stetter-homelab/compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | Docker Compose stacks (multiple repos) | ✅ Active |
-
-### Active Projects Summary
-
-- **Docker Platform**: Stateful services on ctr01 (MS-A2)
-- **Kubernetes Development**: Multiple clusters on core.rsdn.io
-- **Talos Linux**: Two parallel approaches (CLI vs Terraform)
-- **Security Testing**: Kali Linux environment on sec01
+| Repository | Purpose |
+|------------|---------|
+| [homelab-docs](https://github.com/johnstetter/homelab-docs) | This site (GitHub) |
+| [vm-platform](https://gitlab.com/stetter-homelab/vm-platform) | OpenTofu + Ansible for Proxmox guests and hosts |
+| [compose-stacks](https://gitlab.com/stetter-homelab/compose-stacks) | One repo per Docker Compose stack on ctr01 |
+| [ci-templates](https://gitlab.com/stetter-homelab/ci-templates) | Shared GitLab CI templates |
+| [mac-config](https://gitlab.com/stetter-homelab/mac-config) | Both Macs: Brewfile, dotfiles, Studio LaunchDaemons |
+| [home-assistant-config](https://gitlab.com/stetter-homelab/home-assistant-config) | Home Assistant configuration |
 
 ## Getting Started
 
@@ -109,14 +93,15 @@ New to the homelab? Start here:
 2. **[Hardware Inventory](architecture/hardware.md)** - Know what hardware is running
 3. **[Network Topology](architecture/network.md)** - Understand the network layout
 4. **[Service Catalog](services/index.md)** - Find the service you need
+5. **[Local AI](architecture/ai.md)** - How inference is split between the Studio and ctr01
 
 ## Contributing
 
-All documentation lives in the [stetter-homelab/docs](https://gitlab.com/stetter-homelab/docs) repository. To make changes:
+All documentation lives in [johnstetter/homelab-docs](https://github.com/johnstetter/homelab-docs) on GitHub, whose Actions workflow publishes this site to GitHub Pages. To make changes:
 
 1. Clone the repository
 2. Create a feature branch
 3. Make your changes
-4. Submit a merge request
+4. Open a pull request
 
 See the [Runbooks](runbooks/index.md) section for operational procedures and standards.
