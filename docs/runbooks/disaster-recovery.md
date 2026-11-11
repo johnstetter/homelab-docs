@@ -464,13 +464,27 @@ The Synology is the source of truth for:
 
 1. Check BIOS/UEFI for boot order
 2. Boot from Proxmox installer USB if needed
-3. Reinstall Proxmox (VMs are stored on local storage)
+3. Reinstall Proxmox on a spare NVMe. VM disks live on the ZFS pool
+   `vm-storage` (separate disk) and survive. Don't touch that disk in the installer.
 
-**After Proxmox is operational:**
+**After Proxmox is operational** (done for real on 2026-11-10):
 
-1. Verify storage pools
-2. Check VM configurations
-3. Import VMs if needed
+1. `zpool import vm-storage` (do **not** `zpool upgrade`)
+2. Restore cluster config: stop `pve-cluster`, copy the newest
+   `config.db` from the weekly archive
+   (`10.0.10.4:/volume1/proxmox-nexus/host-config/nexus/*.tar.gz`) to
+   `/var/lib/pve-cluster/config.db`, start `pve-cluster`. Users, API
+   tokens, ACLs, storage, jobs, mappings and VM configs all come back.
+3. Rebuild `/etc/network/interfaces` against the new pinned NIC names
+   (the archive has the old file and `.link` pins for reference)
+4. Root SSH: dev01's key is in `/etc/pve/priv/authorized_keys`, so log in
+   from dev01 and add your key there
+5. Re-run Ansible: `create-stetter-user.yml -e ansible_user=root`, then
+   `ssh-authorized-keys`, `node-exporter`, `alloy`, `hermes-user`,
+   `pve-config-backup` with `-l nexus`
+6. Switch apt to the no-subscription repos (no subscription key)
+7. LXC rootfs volumes on `local-lvm` are lost with the boot disk; restore
+   them from vzdump
 
 ### Step 5: Restore VMs
 
