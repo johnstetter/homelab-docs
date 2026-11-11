@@ -137,3 +137,5 @@ nav:
           - Troubleshooting: runbooks/troubleshooting.md
       - Infrastructure:
           - VM Lifecycle: runbooks/vm-lifecycle.md
+  - Postmortems:
+      - 2026-11-10 nexus boot disk: postmortems/2026-11-10-nexus-boot-disk.md
