@@ -23,10 +23,13 @@ Complete inventory of all hardware in the Stetter Homelab.
 | **CPU** | AMD Ryzen 9 9955HX |
 | **RAM** | 64GB DDR5 |
 | **GPU** | NVIDIA RTX 2000E ADA |
-| **Storage** | NVMe SSD (OS + VMs) |
-| **Network** | 2.5GbE + 10GbE (via Synology) |
-| **IP Address** | 192.168.1.12 |
-| **OS** | Proxmox VE 8.x |
+| **Storage** | 1TB Samsung 970 EVO Plus (boot, ext4) + 4TB Samsung 990 EVO Plus (ZFS `vm-storage`) |
+| **Network** | nic1 Realtek RJ45 → vmbr0 (LAN); nic2 i40e SFP+ → vmbr1 (10G DAC to Synology, MTU 9000) |
+| **IP Address** | 192.168.1.12 (LAN), 10.0.10.1 (storage) |
+| **OS** | Proxmox VE 9.2 (node `nexus`, reinstalled 2026-11-10 after the Kingston boot NVMe failed) |
+
+NIC names are pinned by MAC in `/usr/local/lib/systemd/network/50-pmx-nic*.link`.
+Full table: vm-platform `docs/infrastructure-inventory.md`.
 
 **Hosted VMs:**
 
