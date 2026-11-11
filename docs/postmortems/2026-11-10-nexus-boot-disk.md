@@ -40,7 +40,9 @@ Times come from nexus logs (`zpool history`, journal) where available; the rest 
 16. **Audit and health checks (21:38).** All PVE users and tokens present and working; all VMs, NFS mounts, GPU and DNS healthy.
 17. **Monitoring and logs back (21:40 to 21:42).** node_exporter and Alloy re-installed by Ansible after switching apt to the no-subscription repos. Prometheus scraping nexus and logs reaching Loki again.
 18. **Config backup live (21:43).** First run of the new `pve-config-backup` timer job wrote a verified archive to the Synology over 10G.
-19. **Docs and MRs (21:45 onward).** Fixes and docs pushed as MRs; follow-up issues filed.
+19. **Docs and MRs (21:45 onward).** Fixes and docs pushed as MRs; follow-up issues filed. vm-platform !96 to !98 merged 21:51 to 21:56.
+20. **LXC restore (22:09 to 22:10).** A first `pct restore --force` of 501 and 502 failed at 22:09 and deleted both CT configs (see below). They were restored without `--force` at 22:10 from the 2026-11-08 vzdumps; ci01 (502) started at 22:10.
+21. **Backups moved to 10G (22:14).** The PVE `synology` storage was repointed from `syn.rsdn.io` (1G LAN) to 10.0.10.4 (vmbr1 DAC).
 
 ---
 
@@ -73,7 +75,8 @@ The Kingston 1TB NVMe boot drive (the stock drive that shipped with the MS-A2) d
 - Opening the Synology to reach the M.2 slots while the pool was healthy but unprotected caused a loose-tray degradation. Tray handling on a NAS is risky without a pre-check.
 - A VM passthrough device blocked VM start with an unhelpful dependency on physical hardware.
 - The installer's `maxvz=0` setting did not take effect, leaving an unneeded 794G thin pool (harmless).
-- The LXC rootfs volumes for 501 and 502 lived on the Kingston's `local-lvm`, so those containers are down until restored.
+- The LXC rootfs volumes for 501 and 502 lived on the Kingston's `local-lvm`, so those containers were down until restored from vzdump later that evening.
+- `pct restore --force` onto CT IDs whose volumes were missing deleted the volume it had just allocated (same name), failed, and removed the CT configs. Nothing was lost, but restore onto a missing volume needs the stale config removed first, not `--force`.
 
 ## Where we got lucky
 
@@ -99,13 +102,14 @@ The Kingston itself was not erased and has not been RMA'd. It also uses a volume
 
 ## Final state
 
-- **Boot disk:** Samsung 970 EVO Plus 1TB, ext4, Proxmox VE 9.2 (pve-manager 9.2.2, kernel 7.0.2-6-pve). Includes a `local-lvm` thin pool (794G), currently empty.
+- **Boot disk:** Samsung 970 EVO Plus 1TB, ext4, Proxmox VE 9.2 (pve-manager 9.2.2, kernel 7.0.2-6-pve). Includes a `local-lvm` thin pool (794G) holding the LXC rootfs volumes.
 - **VM storage:** ZFS pool `vm-storage` on the Samsung 990 EVO Plus 4TB (unchanged).
 - **Names:** NIC names are pinned by MAC in `/usr/local/lib/systemd/network/50-pmx-nic*.link`. `nic1` = enp3s0 (Realtek RJ45, LAN, links at 1G), `nic2` = enp5s0f0np0 (Intel SFP+, 10G DAC to Synology), `nic0` = enp4s0 (Intel RJ45, unused), `nic3` = enp5s0f1np1 (unused SFP+), `nic4` = wlp6s0 (pinned, but no device present under PVE 9.2).
 - **Bridges:** `vmbr0` on `nic1` (192.168.1.12/24, gw 192.168.1.1, VLAN-aware); `vmbr1` on `nic2` (10.0.10.1/24, MTU 9000, Synology at 10.0.10.4).
 - **Backup copies on nexus:** `/root/config.db.fresh`, `/root/interfaces.fresh`. Rescue files in `/vm-storage/rescue/`.
-- **VMs:** ctr01 (100, 192.168.1.20), dev01 (101, 192.168.1.21), sec01 (110, 192.168.1.25), plus templates. LXCs 501 (mail-bridge) and 502 (ci01) are stopped with missing rootfs.
+- **VMs:** ctr01 (100, 192.168.1.20), dev01 (101, 192.168.1.21), sec01 (110, 192.168.1.25), plus templates. LXCs 501 (mail-bridge, stopped, `onboot: 0`) and 502 (ci01, 192.168.1.22, running; GitLab runner not yet installed, #118).
 - **Host config backup:** weekly, Sunday 02:30, to `10.0.10.4:/volume1/proxmox-nexus/host-config/nexus/` over the 10G link.
+- **vzdump target:** PVE storage `synology` mounts `10.0.10.4:/volume1/proxmox-nexus` over the 10G link (was `syn.rsdn.io` on the 1G LAN).
 
 ---
 
@@ -146,6 +150,18 @@ All changes went through vm-platform's Ansible playbooks where they existed. Rep
 - Writes to `10.0.10.4:/volume1/proxmox-nexus` through a mount unit that is mounted only while the job runs, so the traffic goes over the 10G DAC. Keeps 12 archives and writes a node_exporter textfile metric for alerting.
 - The test archive was 40K and its `config.db` passed `PRAGMA integrity_check`.
 
+**LXC restore**
+
+- Restored 501 and 502 to `local-lvm` from the 2026-11-08 vzdumps (both logs show "Finished Backup"). Configs match the pre-restore ones; ci01's description was re-applied.
+- The first attempt used `--force` and failed as described under "What went poorly". The configs had been saved to `/root/lxc-50{1,2}.conf.pre-restore` beforehand.
+- Started ci01 (its `onboot: 1`), which came up at 192.168.1.22 and resolves DNS. It has no gitlab-runner yet, which matches #118 being open. mail-bridge left stopped.
+
+**vzdump target moved to 10G**
+
+- ctr01's 307G archive on 2026-11-08 wrote at about 109 MB/s, the ceiling of the 1G LAN link, and that traffic shared nic1 with every VM's LAN traffic.
+- `pvesm set` refuses to change `server`, so `/etc/pve/storage.cfg` was edited directly (old copy at `/root/storage.cfg.pre-10g`), the share unmounted, and PVE remounted it. Verified `addr=10.0.10.4`, `clientaddr=10.0.10.1`, active and writable.
+- It also removes the storage's dependence on DNS. First real run: Sunday 03:00; compare with last week's 48 minutes for ctr01.
+
 **Docs**
 
 - vm-platform `infrastructure-inventory.md` and `progress.md` (MR !98); homelab-docs hardware page and DR runbook (MR !9, with this postmortem).
@@ -155,11 +171,9 @@ All changes went through vm-platform's Ansible playbooks where they existed. Rep
 - **Technitium forwarders:** Chrome wasn't connected, and the UI and API need the admin password. There is no Pi-hole on .20 (it's the Technitium secondary), so the recommendation is to clear the primary's forwarders and let it resolve itself, or use a public resolver.
 - **Synology scrub:** waiting for the pool repair to finish.
 - **Pulse temperature agent:** #131.
-- **LXC 501/502 restore:** not attempted.
 
 **Findings along the way**
 
-- The PVE `synology` storage (vzdump target) mounts `syn.rsdn.io`, which resolves to the 1G LAN address, not the 10G link.
 - The Synology `proxmox-pve-tc1` NFS export allows `109.168.1.11`, a typo for 192.168.1.11.
 - The LAN cable is on the Realtek port, which links at 1G. The old install bridged `nic0` (Intel 2.5G), though old and new names may not map to the same ports.
 - The Synology share ignores the 0600 mode on backup archives, so anyone with access to the share can read the `/etc/pve/priv` secrets inside them.
@@ -180,8 +194,8 @@ All changes went through vm-platform's Ansible playbooks where they existed. Rep
 | 7 | Document the NIC name map and which port goes where | Done (above, and vm-platform inventory) |
 | 8 | Consider a mirrored boot disk or a second Proxmox host with replication for the next hypervisor failure | Optional |
 | 9 | For VMs with USB passthrough, consider whether the dependency is worth blocking boot over | Optional |
-| 10 | Restore LXC 501 (mail-bridge) and 502 (ci01) from the 2026-11-08 vzdumps; 502 has `onboot: 1` | Open |
-| 11 | Point the PVE `synology` storage at 10.0.10.4 so vzdump uses the 10G link | Open, needs decision |
+| 10 | Restore LXC 501 (mail-bridge) and 502 (ci01) from the 2026-11-08 vzdumps; 502 has `onboot: 1` | Done |
+| 11 | Point the PVE `synology` storage at 10.0.10.4 so vzdump uses the 10G link | Done |
 | 12 | Fix the `proxmox-pve-tc1` NFS export typo (`109.168.1.11`) | Open |
 | 13 | Alert on `pve_config_backup_last_success_timestamp_seconds` going stale | Open |
 
