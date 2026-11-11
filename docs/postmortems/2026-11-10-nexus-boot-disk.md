@@ -1,10 +1,10 @@
 # Postmortem: nexus boot disk failure and rebuild
 
-**Date of incident:** Tuesday, November 10, 2026
-**Host:** nexus (Minisforum MS-A2, 192.168.1.12, nexus.rsdn.io)
-**Severity:** High. Primary hypervisor down, so every VM and container (ctr01, dev01, sec01, Docker stacks, the secondary DNS) was offline for several hours.
-**Data loss:** None for VM disks or Proxmox config. Host-level files on the old root disk were not captured (see "What was lost").
-**Status:** Resolved. Open follow-ups are listed at the end.
+- **Date of incident:** Tuesday, November 10, 2026
+- **Host:** nexus (Minisforum MS-A2, 192.168.1.12, nexus.rsdn.io)
+- **Severity:** High. Primary hypervisor down, so every VM and container (ctr01, dev01, sec01, Docker stacks, the secondary DNS) was offline for several hours.
+- **Data loss:** None for VM disks or Proxmox config. Host-level files on the old root disk were not captured (see "What was lost").
+- **Status:** Resolved. Open follow-ups are listed at the end.
 
 ---
 
