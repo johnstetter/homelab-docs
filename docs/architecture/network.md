@@ -53,7 +53,7 @@ Storage network: nexus 10.0.10.1, syn 10.0.10.4, ctr01 10.0.10.20, sec01 10.0.10
 - Every web service is a CNAME to **`rprx.rsdn.io`** (ctr01, where Traefik listens), including the ones that actually live on the Studio, the GitLab VM or the Proxmox hosts. Traefik forwards those.
 - Hosts themselves have A records (`studio`, `nexus`, `ha`, ...).
 - Public DNS for `rsdn.io` and `stetter.io` is Cloudflare. No `*.rsdn.io` service name exists there (as of 2026-11-17, `jf`, `requests` and `tofa` have no public record); `stetter.io` points at Cloudflare's edge.
-- Tailscale clients get split DNS: `rsdn.io` → 192.168.1.4, so the same names work remotely.
+- Tailscale clients get split DNS: `rsdn.io` → 192.168.1.4 only, so the same names work remotely. (ctr01's secondary at .20 was removed from the split DNS on 2026-11-17: restricted users aren't granted it, so their lookups to it were dropped.)
 
 ## Reverse Proxy: Traefik
 
@@ -111,14 +111,36 @@ See [Traefik](../services/traefik.md) for labels and operations.
 
 | Node | Role |
 |------|------|
-| `ctr01-ts` | Host `tailscaled`, `tag:docker-host`, subnet router for `192.168.1.0/24` |
-| `nexus-ts` | Subnet router for `192.168.1.0/24` |
+| `ctr01-ts` | Host `tailscaled`, `tag:docker-host`, subnet router for `192.168.1.0/24`, host for Tailscale Services |
+| `nexus-ts` | Standby subnet router for `192.168.1.0/24` (offline as of 2026-11-17) |
 | `studio-ts`, `air-ts`, `bluefin-tc1-ts`, `iphone`, `homeassistant` | Clients |
 | `droplet-ts` | Cloud VM |
 
 Remote clients reach every `*.rsdn.io` name through split DNS and the subnet route, landing on `websecure` like a LAN client. ctr01 runs `--accept-dns=false --accept-routes=false` so it never routes the LAN back through the tailnet.
 
-Both ctr01 and nexus advertise `192.168.1.0/24`; Tailscale uses one at a time and fails over to the other. On 2026-10-30 ctr01 was the active one (`tailscale status --json` lists it under `PrimaryRoutes`).
+Both ctr01 and nexus advertise `192.168.1.0/24`; Tailscale uses one at a time and fails over to the other. ctr01 is the active one (`tailscale status --json` lists it under `PrimaryRoutes`).
+
+### Policy (GitOps)
+
+The tailnet policy file lives in [stetter-homelab/tailscale-policy](https://gitlab.com/stetter-homelab/tailscale-policy). An MR runs Tailscale's validation and the policy's `tests`; merging to `main` applies it (`gitops-pusher`, OAuth trust credential scoped to the policy file). The console editor is locked. DNS settings and Service definitions aren't in the policy file and are still managed in the console.
+
+| Who | Access |
+|-----|--------|
+| `autogroup:admin` (John) | Everything |
+| `group:friends` | Traefik on 192.168.1.20 (80/443) and DNS on 192.168.1.4, so every `*.rsdn.io` name |
+| `group:media-users` | Only the media Tailscale Services (`svc:tofa`), nothing else on the LAN |
+
+Each restricted user has accept/deny entries in `tests`, so an MR that widens their access fails CI. Tests name services (`svc:tofa:443`), not their IPs: the API doesn't match tests on a service IP.
+
+### Tailscale Services
+
+Media servers shared with invited users are published as [Tailscale Services](https://tailscale.com/kb/1552/tailscale-services): each gets its own name and IP (`tofa.bonito-vector.ts.net`), and a grant can target just that service. ctr01's `tailscaled` serves them (HTTPS on 443 → the container's LAN port) from `tailscale/services.sh` in [compose-stacks/core](https://gitlab.com/stetter-homelab/compose-stacks/core); the core README has the steps for adding one.
+
+| Service | Upstream | Who |
+|---------|----------|-----|
+| `svc:tofa` | `http://192.168.1.20:33333` | `group:media-users` |
+
+Clients behind hard NAT (`tailscale netcheck` shows `MappingVariesByDestIP: true` and no `PortMapping`) can't connect directly and fall back to Tailscale's DERP relays, which is fine for downloads but too slow for some streaming web apps. The fix is on their side (UDP 41641 forward, or UPnP/NAT-PMP).
 
 ## Inbound Firewall (UDM Pro)
 
