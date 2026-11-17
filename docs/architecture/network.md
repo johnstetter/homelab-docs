@@ -52,52 +52,41 @@ Storage network: nexus 10.0.10.1, syn 10.0.10.4, ctr01 10.0.10.20, sec01 10.0.10
 
 - Every web service is a CNAME to **`rprx.rsdn.io`** (ctr01, where Traefik listens), including the ones that actually live on the Studio, the GitLab VM or the Proxmox hosts. Traefik forwards those.
 - Hosts themselves have A records (`studio`, `nexus`, `ha`, ...).
-- Public DNS for `rsdn.io` and `stetter.io` is Cloudflare. Only the few internet-facing names exist there (see below).
+- Public DNS for `rsdn.io` and `stetter.io` is Cloudflare. No `*.rsdn.io` service name exists there (as of 2026-11-17, `jf`, `requests` and `tofa` have no public record); `stetter.io` points at Cloudflare's edge.
 - Tailscale clients get split DNS: `rsdn.io` → 192.168.1.4, so the same names work remotely.
 
 ## Reverse Proxy: Traefik
 
-All HTTP(S) goes through one Traefik on ctr01. Traefik routes on the TLS SNI/`Host` header, not on DNS, so **which entrypoint a router listens on is what decides whether it's reachable from the internet.**
+All HTTP(S) goes through one Traefik on ctr01. Traefik routes on the TLS SNI/`Host` header, not on DNS, so anyone who can reach an entrypoint can reach every router on it. **Nothing forwards internet traffic to Traefik**: the only entrypoints are `web` and `websecure`, reachable from the LAN and the tailnet.
 
 ```mermaid
 graph LR
     subgraph Internet
         U[Internet user]
-        CF[Cloudflare proxy]
+        CF[Cloudflare edge<br/>stetter.io]
     end
     subgraph Home
-        UDM[UDM Pro<br/>WAN 443 → ctr01:8443]
-        subgraph ctr01["ctr01 Traefik"]
-            WS[websecure :443<br/>LAN + tailnet]
-            WSP[websecure-public :8443<br/>internet, opt-in]
+        UDM[UDM Pro<br/>WAN 32400 → ctr01 Plex]
+        subgraph ctr01["ctr01"]
+            WS[Traefik websecure :443<br/>LAN + tailnet]
+            PLEX[Plex :32400]
         end
         LAN[LAN / Tailscale client]
     end
-    U -->|stetter.io| CF --> UDM
-    U -->|jf / requests .rsdn.io| UDM
-    UDM --> WSP
+    U -->|stetter.io| CF
+    U -->|:32400| UDM --> PLEX
     LAN -->|*.rsdn.io| WS
-    WSP --> PUB[stetter-io, jellyfin, seerr]
     WS --> ALL[every router]
 ```
 
 | Entrypoint | Port | Reachable from | Use |
 |------------|------|----------------|-----|
-| `web` | 80 | LAN | Permanent redirect to HTTPS |
-| `websecure` | 443 | LAN, tailnet | Default for every router |
-| `websecure-public` | 8443 | Internet (UDM Pro forwards WAN 443 here) | Opt-in per router |
+| `web` | 80 | LAN, tailnet | Permanent redirect to HTTPS |
+| `websecure` | 443 | LAN, tailnet | Every router |
 
-**Routers on `websecure-public`** (as of 2026-10-30):
+Verified 2026-11-17: `config/traefik/traefik.yml` defines only these two, the Traefik container publishes only 80 and 443, and no router uses another entrypoint. Never forward WAN traffic to Traefik.
 
-| Router | Host | Protection |
-|--------|------|------------|
-| `stetter-io` | `stetter.io`, `www.stetter.io` | Cloudflare-proxied; `ipAllowList` admits Cloudflare ranges only |
-| `jellyfin`, `jellyfin-auth` | `jf.rsdn.io` | Jellyfin login; rate limit on the auth paths |
-| `seerr` | `requests.rsdn.io` | Seerr login; rate limit |
-
-Everything else stays on `websecure`. Never forward WAN traffic to ctr01:443.
-
-**Certificates:** Let's Encrypt wildcard `rsdn.io` + `*.rsdn.io` via Cloudflare DNS-01, on both TLS entrypoints. No port 80 validation needed.
+**Certificates:** Let's Encrypt wildcard `rsdn.io` + `*.rsdn.io` via Cloudflare DNS-01 on `websecure`. No port 80 validation needed.
 
 **Admin UIs** use the Authentik forward-auth middleware (`authentik@docker`). The Traefik dashboard is the first; it admits only the `Homelab Admins` group. An IP allowlist can't do this job: tailnet traffic arrives through the subnet router SNATed to a LAN address.
 
@@ -135,9 +124,9 @@ Both ctr01 and nexus advertise `192.168.1.0/24`; Tailscale uses one at a time an
 
 | WAN port | Forwarded to | Purpose |
 |----------|--------------|---------|
-| 443/tcp | ctr01:8443 | Traefik `websecure-public` |
+| 32400/tcp, 32400/udp | ctr01 (192.168.1.20):32400 | Plex remote access (UniFi rule `otherplex`) |
 
-Other port forwards (for example Plex 32400) weren't re-checked in this pass.
+Read from the UDM's NAT table on 2026-11-17 (`ssh rtr 'iptables -t nat -S | grep DNAT'`); that's the only forward. It's the one exception to "no internet ingress": Plex's own login is the only thing in front of it. Remove it if Plex remote access isn't needed (Tailscale users reach Plex anyway).
 
 ## Outbound VPN
 
@@ -153,5 +142,5 @@ tailscale status                         # which node serves 192.168.1.0/24
 ```
 
 - **404 from Traefik:** no router matches the Host, or the container isn't on `traefik_proxy`.
-- **Works on the LAN, not from the internet:** the router isn't on `websecure-public` (usually correct).
+- **Works on the LAN, not from the internet:** expected; only Plex (32400) is reachable from the internet. Remote users need Tailscale.
 - **chat/hermes 502:** the Studio daemon is down, or its pf anchor no longer lists ctr01's IP.

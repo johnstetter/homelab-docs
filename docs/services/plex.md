@@ -115,6 +115,8 @@ In Plex settings:
 
 ## Remote Access
 
+The UDM forwards WAN 32400/tcp+udp to ctr01 (rule `otherplex`), the homelab's only internet ingress. See [Inbound Firewall](../architecture/network.md#inbound-firewall-udm-pro).
+
 ### Enable Remote Access
 
 1. **Settings** → **Remote Access**

@@ -63,7 +63,7 @@ Welcome to the central documentation hub for the Stetter Homelab infrastructure.
 ### What Changed in 2026
 
 - **Local AI.** A Mac Studio runs Qwen3.8 27B for the Hermes agent and Open WebUI; ctr01's GPU runs `gpt-oss-ha:20b` for Home Assistant voice. See [Local AI](architecture/ai.md).
-- **Traefik entrypoints.** Internal routers sit on `websecure` (443); internet exposure is opt-in via `websecure-public` (8443, WAN 443 forwards there). Admin UIs are behind Authentik. See [Network Topology](architecture/network.md#reverse-proxy-traefik).
+- **No public web entrypoint.** Every Traefik router is on `websecure` (443), reachable from the LAN and the tailnet only; `websecure-public` is gone and the UDM forwards nothing to Traefik. Admin UIs are behind Authentik. See [Network Topology](architecture/network.md#reverse-proxy-traefik).
 - **Tailscale** subnet routing with split DNS replaces any need for a VPN into the LAN.
 - **GitLab** moved from a container on ctr01 to a VM on the Synology.
 - **Retired:** the MacBook Pros, core.rsdn.io and its Kubernetes/Talos clusters, gpu.rsdn.io, n8n, Whishper, vLLM.

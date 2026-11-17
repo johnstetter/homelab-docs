@@ -47,7 +47,7 @@ Shared Docker networks: `traefik_proxy` (ingress) and `monitoring_external` (scr
 
 Traefik v3.7 and Vault 2.2. See [Traefik](../services/traefik.md) and [Vault](../services/vault.md).
 
-- Ports 80, 443 (`websecure`) and 8443 (`websecure-public`).
+- Ports 80 (`web`) and 443 (`websecure`); no public entrypoint.
 - `config/traefik/` is mounted as a **directory**, so `dynamic.yml` edits hot-reload after a deploy (a single-file mount would pin the old inode).
 - Certs in `/mnt/synology/docker/core/traefik/acme.json`.
 - `zork-root` answers the bare `rsdn.io` host with a one-line nginx page.
@@ -104,14 +104,14 @@ Removed in 2026: Open WebUI (now on the Studio), vLLM, Whishper, LibreTranslate,
 
 All of sabnzbd, nzbget, sonarr, radarr, lidarr, bazarr, prowlarr and seerr share `gluetun`'s network namespace, so their traffic leaves through ProtonVPN. Tdarr, Tunarr and ARM use the GPU. ARM rips CDs and DVDs from a Dell DW316 drive attached to ctr01.
 
-`seerr` (`requests.rsdn.io`) is on the public entrypoint with a rate limit.
+`seerr` (`requests.rsdn.io`) is LAN/tailnet only, like every router.
 
 ## mediaservers
 
 | Service | Notes |
 |---------|-------|
 | Plex | Primary media server, NVENC |
-| Jellyfin | `jf.rsdn.io`, public entrypoint; back on ctr01 since 2026-10-27 after a stint on the Studio |
+| Jellyfin | `jf.rsdn.io` (LAN/tailnet); back on ctr01 since 2026-10-27 after a stint on the Studio |
 | Emby | Secondary |
 | Tautulli | Plex statistics |
 | uhf-server | IPTV DVR backend, `ctr01:8001` |
