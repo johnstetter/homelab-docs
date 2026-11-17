@@ -11,14 +11,13 @@ Every Docker Compose stack on ctr01, as deployed on 2026-10-30. Each stack is it
 | [automation](#automation) | watchtower, gitlab-sync (gickup) | - |
 | [ai](#ai) | ollama, ollama-metrics, searxng, gluetun-searxng | search |
 | [media](#media) | gluetun, sonarr, radarr, lidarr, bazarr, prowlarr, sabnzbd, nzbget, seerr, tdarr, tunarr, arm | sonarr, radarr, lidarr, bazarr, prowlarr, sabnzbd, nzbget, requests, tdarr, tunarr, arm |
-| [mediaservers](#mediaservers) | plex, jellyfin, emby, tautulli, uhf-server | plex, jf, emby, tautulli |
+| [mediaservers](#mediaservers) | plex, jellyfin, emby, tautulli, uhf-server, tofa | plex, jf, emby, tautulli, tofa |
 | [silo](#silo) | silo, postgres (pgvector), redis | silo, silo-jf |
 | [tracearr](#tracearr) | tracearr, timescaledb, redis | tracearr |
 | [dispatcharr](#dispatcharr) | dispatcharr, postgres | dispatcharr |
 | [devtools](#devtools) | code-server, flame, it-tools, privatebin, gitlab-runner | code, flame, it-tools, privatebin |
 | [gitlab-mirror](#gitlab-mirror) | gitlab-mirror | - |
 | [technitium](#technitium-ctr01) | technitium | technitium-ctr (via core) |
-| [stetter-io](#stetter-io) | web | stetter.io, www.stetter.io (public) |
 | [frigate](#frigate) | frigate, postgres, redis | frigate (**disabled**) |
 | [gitlab](#gitlab) | gitlab | **disabled**, moved to a VM |
 | [standards](#standards) | - | Shared CLAUDE.md standards, not a running stack |
@@ -115,6 +114,7 @@ All of sabnzbd, nzbget, sonarr, radarr, lidarr, bazarr, prowlarr and seerr share
 | Emby | Secondary |
 | Tautulli | Plex statistics |
 | uhf-server | IPTV DVR backend, `ctr01:8001` |
+| Tofa | `tofa.rsdn.io` (LAN/tailnet) and `tofa.bonito-vector.ts.net` (Tailscale Service `svc:tofa`, for `group:media-users`); private trial, cloud relay off; live TV from Dispatcharr |
 
 The project path is `compose-stacks/mediaservers` (renamed from `media-servers`). The stack runs with an extra compose file, so `hermes-docker compose-up` refuses it.
 
@@ -130,6 +130,11 @@ The project path is `compose-stacks/mediaservers` (renamed from `media-servers`)
 
 IPTV stream manager with HDHomeRun emulation for the media servers, GPU transcoding. `dispatcharr.rsdn.io`.
 
+- Lineup: the five Madison locals (ABC WKOW, CBS WISC, CW WMTV-D2, FOX WMSN, NBC WMTV) from one provider capped at 2 concurrent streams, which Dispatcharr enforces for every client.
+- Tofa uses it as an HDHomeRun at `dispatcharr:9191/hdhr` with the guide from `http://dispatcharr:9191/output/epg`.
+- The container runs on **UTC** (no `TZ`, no `/etc/localtime` mount): with Central time its EPG output was 6 hours early.
+- After adding channels, refresh the EPG source in Dispatcharr, then the source in each client.
+
 ## devtools
 
 code-server, Flame (start page built from `flame.*` Docker labels), IT-Tools, PrivateBin, and a containerized GitLab Runner. ctr01 also runs `gitlab-runner` as a host systemd service.
@@ -142,9 +147,6 @@ Mirrors every GitLab.com group and project John owns or maintains into the self-
 
 Secondary Technitium DNS on 192.168.1.20:53; UI at `technitium-ctr.rsdn.io`. The primary runs on the Synology.
 
-## stetter-io
-
-The public site **stetter.io**: a static Astro site built into an nginx image by CI. Cloudflare proxies it; the Traefik router is only on `websecure-public` and only accepts Cloudflare IPs. No cookies, analytics or third-party requests.
 
 ## frigate
 

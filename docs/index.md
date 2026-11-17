@@ -71,7 +71,7 @@ Welcome to the central documentation hub for the Stetter Homelab infrastructure.
 ### Domain and DNS
 
 - **Internal:** `*.rsdn.io` → CNAME `rprx.rsdn.io` (ctr01), served by Technitium (primary on syn, secondary on ctr01)
-- **Public:** Cloudflare DNS; `stetter.io` is Cloudflare-proxied
+- **Public:** Cloudflare DNS; `stetter.io` is served from Cloudflare's edge, not from the homelab
 - **TLS:** Let's Encrypt wildcard via Traefik (Cloudflare DNS-01)
 
 ## Repositories
