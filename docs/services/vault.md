@@ -9,7 +9,7 @@ HashiCorp Vault for secrets management in the homelab.
 | **URL** | [vault.rsdn.io](https://vault.rsdn.io) |
 | **Stack** | [compose-stacks/core](https://gitlab.com/stetter-homelab/compose-stacks/core) |
 | **Port** | 8200 |
-| **Image** | `hashicorp/vault:1.21` |
+| **Image** | `hashicorp/vault:2.2` |
 
 ## Authentication
 

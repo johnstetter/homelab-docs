@@ -1,5 +1,8 @@
 # Talos Linux Platform
 
+!!! warning "Archived"
+    This platform ran on core.rsdn.io, which was offline when checked on 2026-10-30. Kept for reference; nothing here is running.
+
 Talos Linux is a modern, immutable, and secure Kubernetes operating system that provides a minimal attack surface and declarative configuration. The Stetter Homelab runs active Talos Linux clusters with two different management approaches.
 
 ## Overview

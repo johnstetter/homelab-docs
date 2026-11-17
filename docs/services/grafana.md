@@ -9,7 +9,7 @@ Visualization and dashboards for metrics, logs, and traces.
 | **URL** | [grafana.rsdn.io](https://grafana.rsdn.io) |
 | **Stack** | [compose-stacks/monitoring](https://gitlab.com/stetter-homelab/compose-stacks/monitoring) |
 | **Port** | 3000 |
-| **Image** | `grafana/grafana:12.3.1` |
+| **Image** | `grafana/grafana:13.3.0` |
 
 ## Authentication
 

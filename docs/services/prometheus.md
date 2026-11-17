@@ -9,7 +9,7 @@ Metrics collection and alerting for homelab infrastructure.
 | **URL** | [prometheus.rsdn.io](https://prometheus.rsdn.io) |
 | **Stack** | [compose-stacks/monitoring](https://gitlab.com/stetter-homelab/compose-stacks/monitoring) |
 | **Port** | 9090 |
-| **Image** | `prom/prometheus:v3.8.1` |
+| **Image** | `prom/prometheus:v3.15.1` |
 
 ## Authentication
 
@@ -344,8 +344,8 @@ Prometheus scrapes targets defined in `config/prometheus/prometheus.yml`.
 
 | Job | Target | Interval | Purpose |
 |-----|--------|----------|---------|
-| `ctr01-node-exporter` | 192.168.1.20:9100 | 15s | Container host metrics |
-| `nexus-node-exporter` | 192.168.1.12:9100 | 15s | Proxmox MS-A2 metrics |
+| `ctr01-node-exporter` | 192.168.1.20:9100 | 15s | ctr01 host metrics + Ollama textfile gauges |
+| `nexus-node-exporter` | 192.168.1.12:9100 | 15s | nexus (MS-A2) host metrics |
 | `pve-tc1-node-exporter` | 192.168.1.11:9100 | 15s | Proxmox TC1 metrics |
 | `synology-node-exporter` | 192.168.1.4:9100 | 15s | NAS metrics |
 | `homeassistant-node` | 192.168.1.3:9100 | 15s | HA VM metrics |
@@ -356,6 +356,10 @@ Prometheus scrapes targets defined in `config/prometheus/prometheus.yml`.
 | `unpoller` | unpoller:9130 | 30s | UniFi network metrics |
 | `proxmox-pve-tc1` | pve-exporter:9221 | 60s | PVE TC1 cluster metrics |
 | `proxmox-nexus` | pve-exporter:9221 | 60s | PVE MS-A2 cluster metrics |
+| `synology-snmp` | snmp-exporter → 192.168.1.4 | 60s | DSM volumes, disks, temperatures |
+| `gitlab` | 192.168.1.156:443 | 15s | GitLab VM on the Synology |
+| `mac-studio-node` | studio.rsdn.io:9100 | 5s | Mac Studio node_exporter + GPU memory and Ollama textfile gauges |
+| `mac-studio-macmon` | studio.rsdn.io:9101 | 5s | Mac Studio GPU/CPU/ANE power, temperatures, utilization |
 
 ### Add a New Scrape Target
 

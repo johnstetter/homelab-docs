@@ -9,7 +9,7 @@ Web UI for managing restic backup repositories. Provides backup scheduling, brow
 | **URL** | [backrest.rsdn.io](https://backrest.rsdn.io) |
 | **Stack** | [compose-stacks/management](https://gitlab.com/stetter-homelab/compose-stacks/management) |
 | **Port** | 9898 |
-| **Image** | `garethgeorge/backrest:v1.10.1` |
+| **Image** | `garethgeorge/backrest:v1.14.1` |
 
 ## Authentication
 

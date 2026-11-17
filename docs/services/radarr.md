@@ -9,7 +9,7 @@ Radarr is a movie management and automation tool that monitors for movies, downl
 | **URL** | [radarr.rsdn.io](https://radarr.rsdn.io) |
 | **Stack** | [compose-stacks/media](https://gitlab.com/stetter-homelab/compose-stacks/media) |
 | **Port** | 7878 |
-| **Image** | `linuxserver/radarr:latest` |
+| **Image** | `lscr.io/linuxserver/radarr:latest` |
 
 ## Authentication
 

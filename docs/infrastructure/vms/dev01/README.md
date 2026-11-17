@@ -4,7 +4,7 @@ Development environment and secure bastion host for homelab infrastructure manag
 
 ## Overview
 
-**dev01** is an Ubuntu 24.04 LTS-based development VM that serves dual purposes: primary development environment for infrastructure-as-code and secure bastion host for accessing homelab resources.
+**dev01** is an Ubuntu 26.04 LTS-based development VM that serves dual purposes: primary development environment for infrastructure-as-code and secure bastion host for accessing homelab resources.
 
 ### Key Features
 
@@ -41,12 +41,12 @@ Development environment and secure bastion host for homelab infrastructure manag
 
 | Component | Specification |
 |-----------|--------------|
-| **OS** | Ubuntu 24.04 LTS (Noble) |
-| **vCPUs** | 4 cores |
-| **RAM** | 16 GB |
-| **Disk** | 50 GB (local SSD) |
+| **OS** | Ubuntu 26.04 LTS (Resolute) |
+| **vCPUs** | 2 cores |
+| **RAM** | 4 GB |
+| **Disk** | 100 GB on ZFS `vm-storage` |
 | **Network** | Single NIC (management) |
-| **Hypervisor** | Proxmox VE on pve-ms-a2 |
+| **Hypervisor** | Proxmox VE 9.2 on nexus (VM 101) |
 
 ### Network Configuration
 
@@ -223,7 +223,7 @@ cd terraform/vms/new-vm
 cat > main.tf << 'EOF'
 resource "proxmox_vm_qemu" "new-vm" {
   name        = "new-vm"
-  target_node = "pve-ms-a2"
+  target_node = "nexus"
   vmid        = 123
 
   cores    = 4
@@ -312,13 +312,13 @@ packer validate packer/*/
 ### Resource Allocation
 
 **CPU Allocation:**
-- 4 vCPUs provide adequate performance for infrastructure automation
+- 2 vCPUs are enough for a bastion and light automation
 - OpenTofu operations are generally single-threaded
 - Ansible parallel execution benefits from multiple cores
 - Packer builds can be CPU-intensive during template creation
 
 **Memory Usage:**
-- 16 GB RAM supports multiple concurrent development environments
+- 4 GB RAM: day-to-day development happens on the Macs and on ctr01
 - Large Ansible inventories benefit from additional memory
 - Packer builds may require significant RAM for VM creation
 - Devbox environments use minimal overhead

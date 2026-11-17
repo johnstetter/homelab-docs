@@ -2,14 +2,17 @@
 
 Network Video Recorder (NVR) with GPU-accelerated object detection.
 
+!!! warning "Disabled since 2026-10-28"
+    The stack is scaled to zero (`deploy.replicas: 0`) so Home Assistant's voice LLM can have the RTX 2000E's VRAM. Recordings stay on `/volume1/frigate`. To bring it back, check VRAM headroom against `gpt-oss-ha:20b` (~12.4 of 16 GB) first.
+
 ## Access
 
 | Property | Value |
 |----------|-------|
 | **URL** | [frigate.rsdn.io](https://frigate.rsdn.io) |
 | **Stack** | [compose-stacks/frigate](https://gitlab.com/stetter-homelab/compose-stacks/frigate) |
-| **Ports** | 5000 (Web), 8554 (RTSP), 8555 (WebRTC) |
-| **Image** | `ghcr.io/blakeblackshear/frigate:0.16.3-tensorrt` |
+| **Ports** | 5001 (API/UI), 8554 (RTSP), 8555 (WebRTC) |
+| **Image** | `ghcr.io/blakeblackshear/frigate:0.17.2-tensorrt` |
 | **GPU** | NVIDIA RTX2000E ADA (TensorRT) |
 
 ## Architecture

@@ -1,311 +1,96 @@
 # VM Platform
 
-The vm-platform repository manages virtual machine provisioning and configuration for the Stetter Homelab.
+[stetter-homelab/vm-platform](https://gitlab.com/stetter-homelab/vm-platform) provisions and configures the Proxmox guests and the Proxmox hosts themselves.
 
-**Repository:** [stetter-homelab/vm-platform](https://gitlab.com/stetter-homelab/vm-platform)
+| Tool | Version (devbox) | Used for |
+|------|------------------|----------|
+| OpenTofu | 1.12 | VMs on nexus via the `bpg/proxmox` provider; state in GitLab's HTTP backend, one state per VM |
+| Ansible | 2.20 | Everything after first boot, on guests and on both Proxmox hosts |
+| Packer | - | Built templates 9001-9003; dormant since 2026-02 and likely to be dropped |
 
-## Overview
+Work happens in `devbox shell`, which pins the tools above.
 
-This repository contains:
-
-- **Packer templates** for building VM images
-- **OpenTofu configurations** for provisioning VMs on Proxmox
-- **Ansible playbooks** for post-provisioning configuration
-
-## Repository Structure
+## Layout
 
 ```
 vm-platform/
-├── packer/
-│   ├── debian-13.pkr.hcl      # Debian 13 template
-│   ├── ubuntu-24.04.pkr.hcl   # Ubuntu 24.04 template
-│   └── scripts/               # Provisioning scripts
-├── tofu/
-│   ├── main.tf                # Main configuration
-│   ├── variables.tf           # Variable definitions
-│   ├── terraform.tfvars       # Variable values
-│   └── modules/
-│       └── proxmox-vm/        # VM module
+├── terraform/
+│   ├── modules/proxmox-vm/   # bpg/proxmox VM module (UEFI + BIOS)
+│   └── vms/
+│       ├── ctr01/  dev01/  sec01/
+│       ├── _templates/       # scaffolds for new VMs (clone from 9001-9003)
+│       └── new-vm.sh
 ├── ansible/
-│   ├── site.yml               # Main playbook
-│   ├── inventory/             # Inventory files
-│   └── roles/
-│       ├── common/            # Base configuration
-│       ├── docker/            # Docker installation
-│       └── monitoring/        # Node exporter, etc.
-├── devbox.json                # Development environment
-└── .gitlab-ci.yml             # CI/CD pipeline
+│   ├── inventory/hosts.yml   # container_hosts, dev_hosts, security_hosts, proxmox_hosts, ci_hosts
+│   ├── site.yml
+│   ├── playbooks/            # one per concern (below)
+│   ├── roles/                # alloy, dev-env, docker-volume-backup, node-exporter,
+│   │                         # nvidia-drivers, proxmox_backup, proxmox_storage,
+│   │                         # pulse-sensor-proxy, security_tools
+│   └── files/hermes/         # hermes-readlog, hermes-docker, hermes-pve wrappers
+├── packer/                   # debian-docker-host, ubuntu-server, kali-security-host
+└── docs/                     # progress log, runbooks, networking, observability
 ```
 
-## VMs Managed
+## What It Manages
 
-| VM Name | Template | vCPUs | RAM | Disk | Purpose |
-|---------|----------|-------|-----|------|---------|
-| ctr01 | Debian 13 | 8 | 32GB | 100GB | Docker host |
-| dev01 | Ubuntu 24.04 | 4 | 16GB | 50GB | Dev/bastion |
-| sec01 | Kali Linux | 4 | 12GB | 120GB | Security testing |
+| Guest / host | Managed by | Notes |
+|--------------|-----------|-------|
+| ctr01 (VM 100) | OpenTofu + Ansible | 10 vCPU, 32 GB (raised from 24 GB), 600 GB on `vm-storage`, GPU via Proxmox resource mapping `nvidia-rtx2000e-gpu`/`-audio` |
+| dev01 (VM 101) | OpenTofu + Ansible | Ubuntu 26.04, bastion and dev environment |
+| sec01 (VM 110) | OpenTofu + Ansible | Kali, security tools role |
+| ci01 (LXC 502) | Ansible (`ci_hosts`) | Created out-of-band for the OpenTofu CI runner (issue #118); runner not installed yet |
+| nexus, pve-tc1 | Ansible (`proxmox_hosts`) | node-exporter, storage, vzdump schedule, Pulse sensor proxy, `hermes` user |
 
-## Packer Templates
+## Playbooks
 
-### Building Templates
+| Playbook | Does |
+|----------|------|
+| `site.yml` | Container and security hosts end to end |
+| `configure-ctr-host.yml`, `configure-dev-host.yml`, `configure-security-host.yml` | Per-role setup |
+| `docker.yml`, `nfs.yml`, `nvidia-drivers` role | Docker CE, NFS mounts over the 10GbE network, NVIDIA drivers + container toolkit |
+| `node-exporter.yml`, `alloy.yml` | Metrics and log shipping |
+| `docker-volume-backup.yml`, `vault-backup-approle.yml` | Backup plumbing |
+| `proxmox-backup.yml` | Weekly vzdump of nexus guests to the Synology |
+| `proxmox-storage.yml` | Proxmox storage definitions |
+| `gitlab-runner.yml` | Host GitLab Runner |
+| `ssh-authorized-keys.yml` | Deploys `ssh_authorized_keys` and sweeps `ssh_revoked_keys` |
+| `hermes-user.yml` | Non-root `hermes` user + sudo wrappers on all five managed hosts |
+| `deploy-docker-cleanup.yml`, `fix-uid.yml`, `create-stetter-user.yml`, `bootstrap-ansible-user.yml` | Maintenance and bootstrap |
 
-```bash
-cd vm-platform/packer
+## CI
 
-# Build Debian 13 template
-devbox run packer build debian-13.pkr.hcl
+Stages: lint → security → validate → plan → apply. Changes under `terraform/` get a `tofu plan` per VM (ctr01, dev01, sec01) and a **manual** `tofu apply` job, using the GitLab state backend. Ansible changes get `ansible-lint` and security checks; playbooks are run from devbox. ci01 is meant to become the runner for the OpenTofu jobs.
 
-# Build Ubuntu 24.04 template
-devbox run packer build ubuntu-24.04.pkr.hcl
-```
+## SSH Keys
 
-### Template Features
+`ansible/inventory/group_vars/all.yml` holds `ssh_authorized_keys` (the shared Mac key, dev01's bastion key, bluefin) and `ssh_revoked_keys`. Dropping a key from the first list doesn't remove it from hosts, so retired keys stay in the second list permanently.
 
-All templates include:
+## Templates on nexus
 
-- [x] QEMU guest agent
-- [x] Cloud-init support
-- [x] SSH key authentication
-- [x] Docker CE pre-installed
-- [x] Node Exporter for monitoring
-- [x] Automatic security updates
+| ID | Name | Source |
+|----|------|--------|
+| 9000 | debian-12-cloud-template | Cloud image |
+| 9001 | debian-13-docker-host | Packer, 2025-12 |
+| 9002 | ubuntu-24.04-server | Packer, 2025-12 |
+| 9003 | kali-2025.4-security-host | Packer, 2026-02 |
+| 9100 | nixos-base-template | NixOS |
 
-### Example Packer Configuration
-
-```hcl
-source "proxmox-iso" "debian-13" {
-  proxmox_url              = var.proxmox_url
-  username                 = var.proxmox_username
-  password                 = var.proxmox_password
-  node                     = "pve-ms-a2"
-
-  iso_file                 = "local:iso/debian-13-amd64-netinst.iso"
-
-  vm_name                  = "debian-13-template"
-  template_description     = "Debian 13 template with Docker"
-
-  cores                    = 2
-  memory                   = 2048
-
-  disk {
-    type         = "scsi"
-    disk_size    = "20G"
-    storage_pool = "local-lvm"
-  }
-
-  network_adapters {
-    model  = "virtio"
-    bridge = "vmbr0"
-  }
-
-  cloud_init              = true
-  cloud_init_storage_pool = "local-lvm"
-}
-```
-
-## OpenTofu Configuration
-
-### Provisioning VMs
-
-```bash
-cd vm-platform/tofu
-
-# Initialize
-devbox run tofu init
-
-# Plan changes
-devbox run tofu plan
-
-# Apply changes
-devbox run tofu apply
-```
-
-### Example VM Configuration
-
-```hcl
-module "ctr01" {
-  source = "./modules/proxmox-vm"
-
-  name        = "ctr01"
-  target_node = "pve-ms-a2"
-  clone       = "debian-13-template"
-
-  cores  = 8
-  memory = 32768
-
-  disk_size = "100G"
-
-  network {
-    bridge = "vmbr0"
-    ip     = "192.168.1.20/24"
-    gw     = "192.168.1.1"
-  }
-
-  # GPU passthrough for Plex/Frigate/Ollama
-  hostpci {
-    device = "0000:01:00.0"
-  }
-
-  ssh_keys = var.ssh_public_keys
-}
-```
-
-### State Management
-
-OpenTofu state is stored locally and backed up:
-
-```bash
-# State location
-tofu/terraform.tfstate
-
-# Backup before changes
-cp terraform.tfstate terraform.tfstate.backup
-```
-
-## Ansible Configuration
-
-### Running Playbooks
-
-```bash
-cd vm-platform/ansible
-
-# Run full site playbook
-devbox run ansible-playbook site.yml
-
-# Run specific role
-devbox run ansible-playbook site.yml --tags docker
-
-# Limit to specific host
-devbox run ansible-playbook site.yml --limit ctr01
-```
-
-### Inventory
-
-```ini
-[docker_hosts]
-ctr01 ansible_host=192.168.1.20
-
-[dev_hosts]
-dev01 ansible_host=192.168.1.21
-
-[all:vars]
-ansible_user=deploy
-ansible_ssh_private_key_file=~/.ssh/homelab
-```
-
-### Roles
-
-| Role | Purpose | Applied To |
-|------|---------|------------|
-| common | Base packages, users, SSH | All hosts |
-| docker | Docker CE, compose plugin | ctr01 |
-| monitoring | Node exporter, promtail | All hosts |
-| gpu | NVIDIA drivers, container toolkit | ctr01 |
-
-## CI/CD Pipeline
-
-The GitLab CI pipeline:
-
-1. **Validate** - Check Packer, Tofu, and Ansible syntax
-2. **Plan** - Show infrastructure changes
-3. **Apply** - Deploy changes (manual trigger)
-
-```yaml
-# .gitlab-ci.yml
-stages:
-  - validate
-  - plan
-  - apply
-
-validate:packer:
-  stage: validate
-  script:
-    - packer validate packer/
-
-validate:tofu:
-  stage: validate
-  script:
-    - cd tofu && tofu init && tofu validate
-
-validate:ansible:
-  stage: validate
-  script:
-    - ansible-lint ansible/
-
-plan:
-  stage: plan
-  script:
-    - cd tofu && tofu plan -out=plan.tfplan
-  artifacts:
-    paths:
-      - tofu/plan.tfplan
-
-apply:
-  stage: apply
-  script:
-    - cd tofu && tofu apply plan.tfplan
-  when: manual
-  only:
-    - main
-```
+The Packer configs have been edited since 9001 was built and never rebuilt, so `packer/` isn't an exact description of what's running.
 
 ## Common Operations
 
-### Rebuilding a VM
-
 ```bash
-# 1. Destroy the VM
-devbox run tofu destroy -target=module.ctr01
+cd vm-platform && devbox shell
 
-# 2. Rebuild from template
-devbox run tofu apply
+# change a VM
+cd terraform/vms/ctr01 && tofu plan && tofu apply
 
-# 3. Run Ansible configuration
-devbox run ansible-playbook site.yml --limit ctr01
+# configure
+cd ansible
+ansible-playbook site.yml -l ctr01
+ansible-playbook playbooks/hermes-user.yml
+ansible-playbook playbooks/ssh-authorized-keys.yml
 ```
 
-### Updating Templates
-
-```bash
-# 1. Build new template
-devbox run packer build packer/debian-13.pkr.hcl
-
-# 2. Update Tofu to use new template
-# Edit tofu/terraform.tfvars
-
-# 3. Recreate VMs (plan first!)
-devbox run tofu plan
-devbox run tofu apply
-```
-
-### Adding a New VM
-
-1. Add VM configuration to `tofu/main.tf`
-2. Add to Ansible inventory
-3. Create/update role assignments in `site.yml`
-4. Run `tofu apply` then `ansible-playbook`
-
-## Troubleshooting
-
-!!! warning "Packer Build Fails"
-    - Check Proxmox API credentials
-    - Verify ISO is uploaded to Proxmox
-    - Check Proxmox storage permissions
-
-!!! warning "Tofu Apply Fails"
-    - Verify template exists
-    - Check Proxmox resource availability
-    - Review state file for conflicts
-
-!!! warning "Ansible Connection Fails"
-    - Verify SSH key is correct
-    - Check VM is running and accessible
-    - Verify cloud-init completed
-
-## Related Documentation
-
-- [VM Overview](vms/vm-overview.md) - Complete VM inventory and specifications
-- [sec01 Security VM](vms/sec01/README.md) - Kali Linux security testing VM
-- [Hardware Inventory](../architecture/hardware.md) - VM host specifications
-- [Network Topology](../architecture/network.md) - Network configuration
-- [Adding New Stacks](../runbooks/new-stack.md) - Post-VM application deployment
+See [VM Lifecycle](../runbooks/vm-lifecycle.md).

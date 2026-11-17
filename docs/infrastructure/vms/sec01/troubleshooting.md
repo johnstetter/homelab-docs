@@ -635,7 +635,7 @@ sudo vim /etc/logrotate.conf
 
 **Emergency Access via Proxmox Console:**
 
-1. Access Proxmox web interface: https://pve-ms-a2.rsdn.io:8006
+1. Access Proxmox web interface: https://pve-nexus.rsdn.io
 2. Navigate to sec01 VM
 3. Open console (noVNC)
 4. Login with local credentials
@@ -665,7 +665,7 @@ sudo systemctl restart sshd
 
 ```bash
 # On Proxmox host
-ssh pve-ms-a2
+ssh nexus
 
 # List available snapshots
 qm listsnapshot 125  # sec01 VM ID

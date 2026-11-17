@@ -9,7 +9,7 @@ Docker container management UI for visual container operations.
 | **URL** | [portainer.rsdn.io](https://portainer.rsdn.io) |
 | **Stack** | [compose-stacks/management](https://gitlab.com/stetter-homelab/compose-stacks/management) |
 | **Port** | 9000 |
-| **Image** | `portainer/portainer-ee:2.33.6` |
+| **Image** | `portainer/portainer-ee:3.0.0` |
 
 ## Authentication
 

@@ -8,8 +8,8 @@ Flame is the primary dashboard and start page for the homelab infrastructure. It
 |----------|-------|
 | **URL** | [flame.rsdn.io](https://flame.rsdn.io) |
 | **Host** | ctr01 |
-| **Stack** | dev-tools |
-| **Image** | `pawelmalak/flame:latest` |
+| **Stack** | devtools |
+| **Image** | `pawelmalak/flame:2.4.0` |
 | **Port** | 5005 |
 
 ## Features

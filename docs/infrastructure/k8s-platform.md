@@ -1,5 +1,8 @@
 # Kubernetes Platform
 
+!!! warning "Archived"
+    This platform ran on core.rsdn.io, which was offline when checked on 2026-10-30. Kept for reference; nothing here is running.
+
 The Stetter Homelab runs **multiple active Kubernetes clusters** on core.rsdn.io for development, testing, and production workloads. This represents a hybrid infrastructure approach where Docker Compose handles stateful services on MS-A2, while Kubernetes manages stateless and experimental workloads.
 
 ## Active Clusters
