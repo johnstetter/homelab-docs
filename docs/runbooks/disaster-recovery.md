@@ -305,7 +305,7 @@ git clone git@gitlab.com:stetter-homelab/compose-stacks/monitoring.git
 git clone git@gitlab.com:stetter-homelab/compose-stacks/management.git
 
 # Remaining stacks
-for s in standards authentik automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror stetter-io frigate; do
+for s in standards authentik automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror frigate; do
   git clone git@gitlab.com:stetter-homelab/compose-stacks/$s.git /opt/stacks/$s
 done
 ln -sfn standards/CLAUDE-GLOBAL.md /opt/stacks/CLAUDE.md
@@ -368,7 +368,7 @@ cd /opt/stacks/management
 docker compose up -d
 
 # Tier 4: Applications
-for stack in authentik automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror stetter-io; do
+for stack in authentik automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror; do
   cd /opt/stacks/$stack
   docker compose up -d
   sleep 10

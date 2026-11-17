@@ -8,21 +8,20 @@ The single reverse proxy for every `*.rsdn.io` name and for `stetter.io`.
 | **Stack** | [compose-stacks/core](https://gitlab.com/stetter-homelab/compose-stacks/core) on ctr01 |
 | **Image** | `traefik:v3.7` (digest-pinned, Renovate) |
 | **DNS name** | `rprx.rsdn.io` → 192.168.1.20; services CNAME to it |
-| **Ports** | 80 `web`, 443 `websecure`, 8443 `websecure-public` |
+| **Ports** | 80 `web`, 443 `websecure` |
 
 ## Entrypoints
 
-Traefik matches on SNI/`Host`, not DNS, so anyone who can reach an entrypoint can reach every router on it by guessing hostnames. Exposure is decided per entrypoint:
+Traefik matches on SNI/`Host`, not DNS, so anyone who can reach an entrypoint can reach every router on it by guessing hostnames. Neither entrypoint is reachable from the internet:
 
 | Entrypoint | Port | Reachable from | Use |
 |------------|------|----------------|-----|
-| `web` | 80 | LAN | Permanent redirect to `websecure` |
-| `websecure` | 443 | LAN, tailnet | **Default.** Every internal router |
-| `websecure-public` | 8443 | Internet: the UDM Pro forwards WAN 443 here | Opt-in per router |
+| `web` | 80 | LAN, tailnet | Permanent redirect to `websecure` |
+| `websecure` | 443 | LAN, tailnet | Every router |
 
-Both TLS entrypoints use the `cloudflare` resolver with a wildcard `rsdn.io` / `*.rsdn.io` certificate (DNS-01, so nothing needs port 80 from outside), and trust `X-Forwarded-*` from loopback, the LAN, Docker and Cloudflare's ranges.
+`websecure` uses the `cloudflare` resolver with a wildcard `rsdn.io` / `*.rsdn.io` certificate (DNS-01, so nothing needs port 80 from outside), and trusts `X-Forwarded-*` from loopback, the LAN and Docker networks.
 
-Routers on `websecure-public` today: `stetter-io` (Cloudflare IPs only), `jellyfin` and `jellyfin-auth` (`jf.rsdn.io`), and `seerr` (`requests.rsdn.io`). See [Network Topology](../architecture/network.md#reverse-proxy-traefik).
+There's no public entrypoint (`websecure-public` and the WAN 443 forward were removed). See [Network Topology](../architecture/network.md#reverse-proxy-traefik).
 
 ## Add a Docker Service
 
@@ -49,7 +48,7 @@ networks:
 
 The entrypoints already set TLS and the cert resolver, so routers don't need `tls.certresolver`. Then add a DNS CNAME `myapp.rsdn.io → rprx.rsdn.io` in Technitium on the NAS.
 
-**To make it public**, use `entrypoints=websecure,websecure-public`, add a rate limit or an allowlist, and create the public DNS record in Cloudflare. Think twice: the app's own login is then the only thing between it and the internet.
+**Sharing with someone outside the household:** invite them to the tailnet and grant them only what they need (see [Remote Access](../architecture/network.md#remote-access-tailscale)). Don't add a public entrypoint or port forward.
 
 ## Add a Non-Docker Backend
 
@@ -103,7 +102,7 @@ docker logs traefik 2>&1 | grep -i acme
 |---------|-------|
 | 404 | Router exists on the dashboard? Host rule exact? Container on `traefik_proxy`? |
 | 502 / 504 | Backend up? Right `loadbalancer.server.port`? For Studio backends, is the daemon up and the pf anchor allowing ctr01? |
-| Works on LAN, not internet | Router not on `websecure-public` (intended for almost everything) |
+| Works on LAN, not internet | Expected: no router is public. Remote users need Tailscale |
 | Dashboard errors | Authentik down: `docker ps | grep authentik` |
 | `dynamic.yml` change ignored | YAML error: `docker logs traefik | grep -i error` |
 | Static config change ignored | `traefik.yml` changes need `docker compose restart traefik` |

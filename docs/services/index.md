@@ -52,13 +52,13 @@ Every web service and where it lives, as of 2026-10-30. All URLs are internal (L
 | Service | URL | Host |
 |---------|-----|------|
 | [Plex](plex.md) | [plex.rsdn.io](https://plex.rsdn.io) | ctr01 |
-| Jellyfin | [jf.rsdn.io](https://jf.rsdn.io) (**public**) | ctr01 |
+| Jellyfin | [jf.rsdn.io](https://jf.rsdn.io) | ctr01 |
 | Emby | [emby.rsdn.io](https://emby.rsdn.io) | ctr01 |
 | Tautulli | [tautulli.rsdn.io](https://tautulli.rsdn.io) | ctr01 |
 | Silo | [silo.rsdn.io](https://silo.rsdn.io), [silo-jf.rsdn.io](https://silo-jf.rsdn.io) | ctr01 |
 | Tracearr | [tracearr.rsdn.io](https://tracearr.rsdn.io) | ctr01 |
 | Dispatcharr | [dispatcharr.rsdn.io](https://dispatcharr.rsdn.io) | ctr01 |
-| Seerr | [requests.rsdn.io](https://requests.rsdn.io) (**public**) | ctr01 |
+| Seerr | [requests.rsdn.io](https://requests.rsdn.io) | ctr01 |
 | [Sonarr](sonarr.md) | [sonarr.rsdn.io](https://sonarr.rsdn.io) | ctr01 |
 | [Radarr](radarr.md) | [radarr.rsdn.io](https://radarr.rsdn.io) | ctr01 |
 | Lidarr | [lidarr.rsdn.io](https://lidarr.rsdn.io) | ctr01 |
@@ -85,7 +85,7 @@ Every web service and where it lives, as of 2026-10-30. All URLs are internal (L
 | Service | URL | Host |
 |---------|-----|------|
 | Home Assistant | [home.rsdn.io](https://home.rsdn.io) | pve-tc1 (192.168.1.3) |
-| stetter.io | [stetter.io](https://stetter.io) (**public**, via Cloudflare) | ctr01 |
+| stetter.io | [stetter.io](https://stetter.io) (**public**) | Cloudflare (not the homelab) |
 | [Frigate](frigate.md) | frigate.rsdn.io | ctr01, **disabled** |
 
 ## Retired

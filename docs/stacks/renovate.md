@@ -152,7 +152,7 @@ Checked on 2026-10-30 from each stack's `renovate.json`:
 | ai, automation, core, devtools, frigate, gitlab, management, media, mediaservers, silo, technitium | `config:recommended` + automerge rule | Yes |
 | monitoring | `config:recommended` + dcgm-exporter versioning rule | No |
 | gitlab-mirror | `config:recommended` | No |
-| authentik, dispatcharr, tracearr, stetter-io | No `renovate.json` | - |
+| authentik, dispatcharr, tracearr | No `renovate.json` | - |
 
 Images are pinned by tag and digest in `compose.yml`, and Renovate updates both. The Synology's compose files (`/volume1/docker/stacks/`) aren't in a repo Renovate watches.
 

@@ -444,7 +444,7 @@ If ctr01 needs to be rebuilt completely:
 
 4. **Clone all stack repositories:**
    ```bash
-   for stack in core authentik monitoring management automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror stetter-io frigate standards; do
+   for stack in core authentik monitoring management automation technitium ai media mediaservers silo tracearr dispatcharr devtools gitlab-mirror frigate standards; do
      git clone git@gitlab.com:stetter-homelab/compose-stacks/$stack.git /opt/stacks/$stack
    done
    ```
