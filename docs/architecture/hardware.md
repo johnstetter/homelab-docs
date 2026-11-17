@@ -24,9 +24,12 @@ The main hypervisor. Every Docker stack runs here, inside ctr01.
 | **CPU** | AMD Ryzen 9 9955HX (16C/32T) |
 | **RAM** | 64 GB DDR5 |
 | **GPU** | NVIDIA RTX 2000E Ada, 16 GB (passed through to ctr01) |
-| **Storage** | 1 TB Kingston NVMe (Proxmox, `local`/`local-lvm`) + 4 TB Samsung 990 EVO Plus (ZFS pool `vm-storage`, VM disks) |
-| **Network** | `vmbr0` 192.168.1.12 (LAN), `vmbr1` 10.0.10.1 (10GbE DAC to the Synology) |
-| **OS** | Proxmox VE 9.2 |
+| **Storage** | 1 TB Samsung 970 EVO Plus (boot, ext4) + 4 TB Samsung 990 EVO Plus (ZFS pool `vm-storage`, VM disks) |
+| **Network** | `vmbr0` 192.168.1.12 (LAN, nic1 Realtek RJ45); `vmbr1` 10.0.10.1 (nic2 i40e SFP+, 10GbE DAC to the Synology, MTU 9000) |
+| **OS** | Proxmox VE 9.2 (node `nexus`, reinstalled 2026-11-10 after the Kingston boot NVMe failed) |
+
+NIC names are pinned by MAC in `/usr/local/lib/systemd/network/50-pmx-nic*.link`.
+Full table: vm-platform `docs/infrastructure-inventory.md`.
 
 | Guest | Type | vCPU | RAM | Disk | OS | Purpose |
 |-------|------|------|-----|------|----|---------|
